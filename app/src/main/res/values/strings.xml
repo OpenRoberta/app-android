@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Open Roberta Mobile</string>
+    <string name="pref_title_url">Open Roberta Lab URL</string>
+    <string name="pref_title_about">About</string>
+    <string name="pref_title_exit">Exit</string>
+
+    <string name="blue_adapter_missing">It seems that your device does not have a Bluetooth adapter. You cannot connect to a robot.</string>
+    <string name= "alert_title">Attention</string>
+    <string name="msg_blue_no_LE">Your device does not have the Bluetooth LE feature. You cannot connect to the robot.</string>
+    <string name="msg_blue_old_version">The android version of your device is not supported to connect to a robot.</string>
+    <string name="location_activation">The connection to a robot needs the location service on your device. Do you want to open the system settings to allow this?</string>
+    <string name="pref_change">Type your new URL for the Open Roberta Lab. Recommended:  http://ip:port</string>
+    <string name="msg_cancel">Cancel</string>
+    <string name="about_app_content">Open Roberta Mobile is developed to make the use of the Open Roberta Lab as easy as possible. This version supports generating and executing programs for WeDo 2.0.</string>
+    <string name="about_fhg_content">Roberta Mobile is an open-source programming platform developed by Fraunhofer IAIS within the initiative <a href="http://www.roberta-home.de/" target="_blank">»Roberta – Learning with Robots«</a></string>
+    <string name="about_publish"><a href="https://www.roberta-home.de/impressum/?L=1" target="_blank">Publishing notes</a></string>
+    <string name="wifi_not_connected">Open Roberta Mobile requires to be connected to a wifi networ, please restart this app after you have made a connection.</string>
+    <string name="location_problem">No location service available!</string>
+    <string name="version">Version %s</string>
+</resources>

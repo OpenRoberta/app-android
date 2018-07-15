@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorBackgroundButton">#CAD525</color>
+    <color name="colorForgroundButton">#FFFFFF</color>
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorOrAccent">#CAD525</color>
+    <color name="colorOrText">#333333</color>
+</resources>

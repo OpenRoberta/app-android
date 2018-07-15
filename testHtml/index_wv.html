@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>RobApp TestBed</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+	<META HTTP-EQUIV="EXPIRES" CONTENT="Mon, 22 Jul 2002 11:12:01 GMT">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" 
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" 
+	integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" 
+	crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="jumbotron">
+      <h3 class="display-4">RobApp TestBed</h1>
+	  <p class="lead" id="message" style="font-size: 1.5em;">No message</p>
+      <hr class="my-4">
+      <p class="lead">
+        <!-- ++++++++++++++++++++++++++++++++++ PERIPHERAL SECTION ++++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col"><font style="font-size: 1.5em;"><b>Init</b></font></div>
+            <div class="col"><button id="selectSystem" type="button" class="btn btn-block btn-success">Select System</button></div>
+                        <div class="dropdown">
+				<div id="libSelect" class="dropdown-content"
+					style="display: none; position: relative; background-color: #f9f9f9; width: auto; min-width: 100%; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1;">
+					<p style="color: black; display: inline;"><b>
+					<table style="margin: 12px 16px; width: calc(100% - 32px);">
+						<tr><td><b>Select&nbsp;System</b></td>
+						    <td align="right"><b><a href="#" onClick="setLib(null);">X</a></b></td></tr>
+					</table>
+					</b></p>
+					<a href="#" style="padding: 6px 16px; display: block; color: black;" onclick="setLib('');">(none)</a>
+					<a href="#" style="padding: 6px 16px; display: block; color: black;" onclick="setLib('dummy');">Roberta&nbsp;Dummy</a>
+					<a href="#" style="padding: 6px 16px; display: block; color: black;" onclick="setLib('lego_2.0');">Lego&nbsp;WeDo&nbsp;2.0</a>
+				</div>
+			</div>
+            <div class="col" id="system_name">(No System Selected)</div>
+            <div class="col"><b>Lib:</b></div><div class="col" id="software_version_lib"></div>
+            <div class="col"><button id="startScan" type="button" class="btn btn-block btn-success">Start Scan</button></div>
+			<div class="dropdown">
+				<div id="deviceDropdown" class="dropdown-content" 
+					style="display: none; position: relative; background-color: #f9f9f9; width: auto; min-width: 100%; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1;">
+				</div>
+			</div>
+            <div class="col" id="device_name">(No Device)</div>
+            <!-- Stop Scan button is part of the Popup:
+			     div class="col"><button id="stopScan" type="button" class="btn btn-block btn-success">Stop Scan</button></div -->
+            <div class="col"><button id="disconnect" type="button" class="btn btn-block btn-success">Disconnect</button></div>
+          </div>
+        </div>
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col"><b>Manufacturer:</b></div><div class="col" id="manufacturer_name"></div>
+            <div class="col"><b>Firmware:</b></div><div class="col" id="firmware_version"></div>
+            <div class="col"><b>Hardware:</b></div><div class="col" id="hardware_version"></div>
+            <div class="col"><b>Software:</b></div><div class="col" id="software_version_dev"></div>
+            <div class="col"><b>Battery&nbsp;(%):</b></div><div class="col" id="battery_level"></div>
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++++ MOTOR SECTION ++++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Motor</b></font></div>
+            <div class="col" id="motorNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="motorIndex"></select></div>
+            <div class="col align-self-center" id="motor_value">??</div>
+          </div>
+        </div>
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"></div>
+            <div class="col"><button id="left" type="button" class="btn btn-block btn-success">left</button></div>
+            <div class="col"><button id="right" type="button" class="btn btn-block btn-success">right</button></div>
+            <div class="col"><button id="stop" type="button" class="btn btn-block btn-success">stop</button></div>
+            <div class="col"><button id="brake" type="button" class="btn btn-block btn-danger">brake</button></div>
+            <div class="col"><button id="drift" type="button" class="btn btn-block btn-warning">drift</button></div>
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++++ LIGHT SECTION ++++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Light</b></font></div>
+            <div class="col" id="lightNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="lightIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="lightMode">
+                <option value="discrete">Discrete</option>
+                <option value="absolute">Absolute</option></select></div>
+            <div class="col align-self-center" id="light_value">??</div>
+          </div>
+        </div>
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"></div>
+            <div class="col"><button id="color0" type="button" class="btn btn-block btn-success" style="background-color:#000000">OFF</button></div>
+            <div class="col"><button id="color1" type="button" class="btn btn-block btn-success" style="background-color:#AA00AA">Magenta</button></div>
+            <div class="col"><button id="color2" type="button" class="btn btn-block btn-success" style="background-color:#800080">Purple</button></div>
+            <div class="col"><button id="color3" type="button" class="btn btn-block btn-success" style="background-color:#0000AA">Blue</button></div>
+            <div class="col"><button id="color4" type="button" class="btn btn-block btn-success" style="background-color:#00AAAA">Cyan</button></div>
+            <div class="col"><button id="color5" type="button" class="btn btn-block btn-success" style="background-color:#00CC00">Light Green</button></div>
+            <div class="col"><button id="color6" type="button" class="btn btn-block btn-success" style="background-color:#009900">Dark Green</button></div>
+            <div class="col"><button id="color7" type="button" class="btn btn-block btn-success" style="background-color:#AAAA00">Yellow</button></div>
+            <div class="col"><button id="color8" type="button" class="btn btn-block btn-success" style="background-color:#FFA500">Orange</button></div>
+            <div class="col"><button id="color9" type="button" class="btn btn-block btn-success" style="background-color:#AA0000">Red</button></div>
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++++ PIEZO SECTION ++++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Piezo</b></font></div>
+            <div class="col" id="piezoNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="piezoIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="piezoMode">
+                <option value="note">Note</option>
+                <option value="frequency">Frequency</option></select></div>
+            <div class="col"><input id="piezoValue" type="text" class="form-control"></input></div>
+            <div class="col">Dur&nbsp;(mSecs):</div>
+            <div class="col"><input id="piezoDur"  type="text" class="form-control" ></input></div>
+            <div class="col"><button id="piezoPlay" type="button" class="btn btn-block btn-success">Play</button></div>
+            <div class="col"><button id="piezoStop" type="button" class="btn btn-block btn-success">Stop</button></div>
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- +++++++++++++++++++++++++++++ ORIENTATION SENSOR SECTION +++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Orientation&nbsp;Sensor</b></font></div>
+            <div class="col" id="orientationNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="orientationIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="orientationMode">
+                <option value="off">Off</option>
+                <option value="angle">Angle</option>
+                <option value="tilt">Tilt</option>
+                <option value="crash">Crash</option></select></div>
+            <div class="col align-self-center" id="orientation_sensor_value">??</div>
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++ MOTION SENSOR SECTION ++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Motion&nbsp;Sensor</b></font></div>
+            <div class="col" id="motionNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="motionIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="motionMode">
+                <option value="off">Off</option>
+                <option value="distance">Distance</option>
+                <option value="count">Count</option></select></div>
+            <div class="col align-self-center" id="motion_sensor_value">??</div>            
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++ VOLTAGE SENSOR SECTION ++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Voltage&nbsp;Sensor</b></font></div>
+            <div class="col" id="voltageNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="voltageIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="voltageMode">
+                <option value="off">Off</option>
+                <option value="on">On</option></select></div>
+            <div class="col align-self-center" id="voltage_sensor_value">??</div>            
+          </div>
+        </div>
+        <hr class="my-4">
+        <!-- ++++++++++++++++++++++++++++++++ CURRENT SENSOR SECTION ++++++++++++++++++++++++++++++++ -->
+        <div class="container-fluid">
+          <div class="row justify-content-start">
+            <div class="col"><font style="font-size: 1.5em;"><b>Current&nbsp;Sensor</b></font></div>
+            <div class="col" id="currentNum">(-)</div>
+            <div class="col">No.&nbsp;<select id="currentIndex"></select></div>
+            <div class="col">Mode&nbsp;<select id="currentMode">
+                <option value="off">Off</option>
+                <option value="on">On</option></select></div>
+            <div class="col align-self-center" id="current_sensor_value">??</div>            
+          </div>
+        </div>
+        <hr class="my-4">
+      </p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script src="jsToAppLink.js"></script>
+    <script src="theLaboraView.js"></script>
+  </body>
+</html>

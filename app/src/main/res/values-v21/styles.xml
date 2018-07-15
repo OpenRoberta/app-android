@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AlertDialogCustom" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:colorPrimary">#CAD525</item>
+        <item name="android:colorAccent">#FFFFFF</item>
+    </style>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorOrAccent</item>
+        <item name="android:textColorPrimary">@color/colorOrText</item>
+        <item name="android:colorPrimary">@color/colorPrimary</item>
+    </style>
+</resources>

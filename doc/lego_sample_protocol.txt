@@ -1,0 +1,98 @@
+This is a typical protocol trace of JSON calls between HTML WebView and the Native App in Android and the Lego WeDo 2.0 SDK.
+The protocol is taken from the Android Studio Logcat when an Android device is connected for debugging and the 
+flag 's_bLogJSON' in class 'MainActivity' is set to 'true'.
+
+Field Description:
+- Calls running in the UI thread are marked "(UI)" whereas calls running in a background thread are marked "(BG)".
+- Calls from HTML to the App are marked "HTML >>>> APP" whereas calls from the App to HTML are marked "HTML <--< APP".
+
+Note that there is no explicit change from initialization to operating. 
+     Some services might already send values while others are not initialized yet.
+
+Note that the communication mode during operating is "fire & forget" rather than "handshake"-
+     That is, if commands are passed to the WeDo SDK there is no JSON reply to the HTML, 
+     when the WeDo SDK triggers a change acknowledgement callback.
+
+Note that a motor does not send initialization states to the HTML view. (In Android callbacks are not invoked for this.)
+     All other service types send initialization states and values.
+
+(BG) HTML >>>> APP: {"target" : "peripheral", "op" : "library", "val1" : "lego_2.0"}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "software" , "val1" : "2.4.0", "val2" : "lib"}
+
+(BG) HTML >>>> APP: {"target" : "peripheral", "op" : "startScan"}
+(BG) HTML <--< APP: {"target" : "peripheral", "op" : "scan", "val1" : "started", "val2" : "Bluetooth LE" }
+(UI) HTML <--< APP: {"target" : "peripheral", "op" : "scan", "val1" : "detected", "val2" : "LPF2 Smart Hub 2 I/O (at: 0C:61:CF:C9:CA:45)" }
+
+(BG) HTML >>>> APP: {"target" : "peripheral", "op" : "connect", "val1" : "LPF2 Smart Hub 2 I/O (at: 0C:61:CF:C9:CA:45)"}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "name" , "val1" : "LPF2 Smart Hub 2 I/O (at: 0C:61:CF:C9:CA:45)"}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "manufacturer" , "val1" : "LEGO System A/S"}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "firmware" , "val1" : "1.0.9.0"}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "hardware" , "val1" : "n.a."}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "software" , "val1" : "2.0.0.0"}
+(UI) HTML <--< APP: {"target" : "light", "id" : 0,  "op" : "mode", "val1" : "discrete" }
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "battery" , "val1" : "100,00"}
+(UI) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "services" , "val1" : "motor 1 light 1 piezo 1 orientation 1 motion 1 voltage 1 current 1"}
+(UI) HTML <--< APP: {"target" : "current", "id" : 0,  "op" : "mode" , "val1" : "on" }
+(UI) HTML <--< APP: {"target" : "voltage", "id" : 0,  "op" : "mode" , "val1" : "on" }
+(UI) HTML <--< APP: {"target" : "orientation", "id" : "0", "op" : "mode", "val1" : "tilt" }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 113.5762 }
+(UI) HTML <--< APP: {"target" : "voltage", "id" : 0, "op" : "value", "val1" : 2559.375 }
+(UI) HTML <--< APP: {"target" : "motion", "id" : 0,  "op" : "mode" , "val1" : "distance" }
+(UI) HTML <--< APP: {"target" : "light", "id" : 0,  "op" : "discrete", "val1" : 3 }
+(UI) HTML <--< APP: {"target" : "motion", "id" : 0, "op" : "distance", "val1" : 10.0 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 122.13331 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 119.79955 }
+(UI) HTML <--< APP: {"target" : "orientation", "id" : 0,  "op" : "tilt", "val1" : "neutral"}
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 121.35539 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 116.68788 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 121.35539 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 118.24371 }
+
+(BG) HTML >>>> APP: {"target" : "voltage", "id" : 0, "op" : "mode", "val1" : "off"}
+
+(BG) HTML >>>> APP: {"target" : "motor", "id" : 0, "op" : "speed", "val1" : -50}
+
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 134.58002 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 157.91759 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 184.36685 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 217.03946 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 242.71078 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 276.16132 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 306.50015 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 332.17148 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 320.50272 }
+
+(BG) HTML >>>> APP: {"target" : "motor", "id" : 0, "op" : "speed", "val1" : 0}
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 293.27554 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 266.04837 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 239.5991 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 203.03691 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 174.25389 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 142.3592 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 116.68788 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 120.57748 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 119.79955 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 121.35539 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 119.02164 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 120.57748 }
+(UI) HTML <--< APP: {"target" : "current", "id" : 0, "op" : "value", "val1" : 118.24371 }
+
+(BG) HTML >>>> APP: {"target" : "current", "id" : 0, "op" : "mode", "val1" : "off"}
+
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "discrete", "val1" : 5}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "discrete", "val1" : 0}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "discrete", "val1" : 9}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "discrete", "val1" : 0}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "mode", "val1" : "absolute"}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "absolute", "val1" : 8388736}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "absolute", "val1" : 0}
+(BG) HTML >>>> APP: {"target" : "light", "id" : 0, "op" : "mode", "val1" : "discrete"}
+
+(BG) HTML >>>> APP: {"target" : "peripheral", "op" : "disconnect"}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "name" , "val1" : ""}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "manufacturer" , "val1" : ""}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "firmware" , "val1" : ""}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "hardware" , "val1" : ""}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "software" , "val1" : ""}
+(BG) HTML <--< APP: {"target" : "peripheral", "id" : 0, "op" : "battery" , "val1" : ""}
+
