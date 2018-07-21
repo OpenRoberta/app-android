@@ -1,0 +1,13 @@
+.gradle
+/local.properties
+/.idea/workspace.xml
+.DS_Store
+.idea/
+*.iml
+build/
+.gradletasknamecache
+
+crashlytics.properties
+crashlytics-build.properties
+com_crashlytics_export_strings.xml
+dagger-proguard-keepnames.cfg
