@@ -40,6 +40,7 @@ import java.net.URLDecoder;
 
 import de.fhg.iais.roberta.robot.RobotCommunicator;
 import de.fhg.iais.roberta.robot.wedo.WeDoCommunicator;
+import de.fhg.iais.roberta.robot.ORB.ORB_Communicator;
 
 /**
  * <h1>Open Roberta Mobile</h1>
@@ -90,6 +91,9 @@ public class ORLabActivity extends Activity {
         this.orView.getSettings().setDomStorageEnabled(true);
         this.orView.getSettings().setLoadWithOverviewMode(true);
         this.orView.getSettings().setUseWideViewPort(true);
+
+this.orView.getSettings().setAppCacheEnabled(false);
+
         this.orView.requestFocus(View.FOCUS_DOWN);
         this.orView.addJavascriptInterface(this, "OpenRoberta");
         this.orView.setDownloadListener(new DownloadListener() {
@@ -132,6 +136,7 @@ public class ORLabActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        robotCommunicator.close();
         super.onDestroy();
     }
 
@@ -231,8 +236,14 @@ public class ORLabActivity extends Activity {
             this.robotCommunicator.close();
             String robot = msg.getString("robot");
             switch (robot) {
+                case "ORB":
+                    this.robotCommunicator = new    ORB_Communicator(this, this.orView);
+                    //TODO inform webview
+                    break;
+
                 case "wedo":
-                    this.robotCommunicator = new WeDoCommunicator(this, this.orView);
+                    this.robotCommunicator = new    ORB_Communicator(this, this.orView);
+                    // TODO: replace with WeDo -----^^^
                     //TODO inform webview
                     break;
                 default:

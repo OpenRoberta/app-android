@@ -5,7 +5,7 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
-import de.fhg.iais.roberta.robot.wedo.RobotCommunicatorInterface;
+import de.fhg.iais.roberta.robot.RobotCommunicatorInterface;
 
 public class RobotCommunicator implements RobotCommunicatorInterface {
     public String ROBOT = "OpenRoberta";
@@ -35,6 +35,10 @@ public class RobotCommunicator implements RobotCommunicatorInterface {
 
     }
 
+    @Override
+    public void open() {
+
+    }
 
     @Override
     public void close() {
