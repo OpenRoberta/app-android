@@ -30,6 +30,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,9 +39,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
 
-import de.fhg.iais.roberta.robot.RobotCommunicator;
-import de.fhg.iais.roberta.robot.wedo.WeDoCommunicator;
 import de.fhg.iais.roberta.robot.ORB.ORB_Communicator;
+import de.fhg.iais.roberta.robot.RobotCommunicator;
 
 /**
  * <h1>Open Roberta Mobile</h1>
@@ -92,7 +92,7 @@ public class ORLabActivity extends Activity {
         this.orView.getSettings().setLoadWithOverviewMode(true);
         this.orView.getSettings().setUseWideViewPort(true);
 
-this.orView.getSettings().setAppCacheEnabled(false);
+        this.orView.getSettings().setAppCacheEnabled(false);
 
         this.orView.requestFocus(View.FOCUS_DOWN);
         this.orView.addJavascriptInterface(this, "OpenRoberta");
@@ -236,13 +236,13 @@ this.orView.getSettings().setAppCacheEnabled(false);
             this.robotCommunicator.close();
             String robot = msg.getString("robot");
             switch (robot) {
-                case "ORB":
-                    this.robotCommunicator = new    ORB_Communicator(this, this.orView);
+                case "orb":
+                    this.robotCommunicator = new ORB_Communicator(this, this.orView);
                     //TODO inform webview
                     break;
 
                 case "wedo":
-                    this.robotCommunicator = new    ORB_Communicator(this, this.orView);
+                    this.robotCommunicator = new ORB_Communicator(this, this.orView);
                     // TODO: replace with WeDo -----^^^
                     //TODO inform webview
                     break;
@@ -356,4 +356,9 @@ this.orView.getSettings().setAppCacheEnabled(false);
             return true;
         }
     }
+
+    public void show_Toast(String t) {
+        Toast.makeText(this, t, Toast.LENGTH_LONG).show();
+    }
+
 }
