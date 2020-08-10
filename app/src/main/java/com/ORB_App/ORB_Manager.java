@@ -36,8 +36,10 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
     private static final int SPEED_MODE = 2;
     private static final int MOVETO_MODE = 3;
 
-    private static final int FORWARD = 1;
-    private static final int BACKWARD = -1;
+    private static final int FORWARD = 0;
+    private static final int BACKWARD = 1;
+
+    private static final int EV3_MOTOR = 72;
 
     Thread mainThread;
     public boolean runMainThread = false;
@@ -147,26 +149,27 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
 
     //TODO Erstmal mit Überschreiben, ob die Funktion in der Form verwendet werden hängt davon ab, wie es Serverseitig gemacht wird
     public void startConfigMotor(int id_1) {
-        configMotor(id_1, 72, 50, 30, 30);
+        configMotor(id_1, EV3_MOTOR, 50, 30, 30);
     }
 
     public void startConfigMotor(int id_1, int id_2) {
-        configMotor(id_1, 72, 50, 30, 30);
-        configMotor(id_2, 72, 50, 30, 30);
+        configMotor(id_1, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_2, EV3_MOTOR, 50, 30, 30);
     }
 
     public void startConfigMotor(int id_1, int id_2, int id_3) {
-        configMotor(id_1, 72, 50, 30, 30);
-        configMotor(id_2, 72, 50, 30, 30);
-        configMotor(id_3, 72, 50, 30, 30);
+        configMotor(id_1, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_2, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_3, EV3_MOTOR, 50, 30, 30);
     }
 
     public void startConfigMotor(int id_1, int id_2, int id_3, int id_4) {
-        configMotor(id_1, 72, 50, 30, 30);
-        configMotor(id_2, 72, 50, 30, 30);
-        configMotor(id_3, 72, 50, 30, 30);
-        configMotor(id_4, 72, 50, 30, 30);
+        configMotor(id_1, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_2, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_3, EV3_MOTOR, 50, 30, 30);
+        configMotor(id_4, EV3_MOTOR, 50, 30, 30);
     }
+
 
     //Stop-----------------------------------------------------------
     public void MotorStop(int id) {
@@ -182,8 +185,6 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
     // Alles Int weil setMotor  braucht speed in int
     // Erst Annahme 1 cm = 72 ticsPerRotation in alle Funktionen, es muss noch geändert werden
     public void drive(int id_1, int id_2, int speed) {
-        configMotor(id_1, 72, 50, 30, 30);
-        configMotor(id_2, 72, 50, 30, 30);
         setMotor(id_1, SPEED_MODE, speed, 0);
         setMotor(id_2, SPEED_MODE, speed, 0);
     }
@@ -193,9 +194,9 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
         int move_to = cm * 72;//ticsPerCm 12,86 = 1cm, TODO noch ungenau, muss angepasst werden, bei alle Funktionen.
         int akutelle_pos_1 = getMotorPos((byte) id_1);
         int akutelle_pos_2 = getMotorPos((byte) id_2);
-        orLabActivity.show_Toast("getMotorPos((byte)id_1):" + getMotorPos((byte) id_1) + "getMotorPos((byte)id_2)" + getMotorPos((byte) id_2));
+        //orLabActivity.show_Toast("getMotorPos((byte)id_1):" + getMotorPos((byte) id_1) + "getMotorPos((byte)id_2)" + getMotorPos((byte) id_2));
         while (true) {
-            orLabActivity.show_Toast(" getMotorPos((byte)id_1):" + getMotorPos((byte) id_1) + " move_to:" + move_to);
+            //orLabActivity.show_Toast(" getMotorPos((byte)id_1):" + getMotorPos((byte) id_1) + " move_to:" + move_to);
             setMotor(id_1, MOVETO_MODE, speed, akutelle_pos_1 + move_to);
             setMotor(id_2, MOVETO_MODE, speed, akutelle_pos_2 + move_to);
             if (getMotorPos((byte) id_1) + 13 > (akutelle_pos_1 + move_to)) {
@@ -205,26 +206,26 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
     }
 
     //Turn-----------------------------------------------------------
-    public void turn(int id_1, int id_2, int speed, int direction) {
-        if (direction == BACKWARD) {
+    public void turn(int id_1, int id_2, int speed, String RorL) {
+        if (RorL == "right") {
             setMotor(id_1, SPEED_MODE, speed, 0);
         }
-        if (direction == FORWARD) {
+        if (RorL == "left") {
             setMotor(id_2, SPEED_MODE, speed, 0);
         }
     }
 
     //Turn-----------------------------------------------------------
-    public void turnDegree(int id_1, int id_2, int speed, int direction, int degree) {
+    public void turnDegree(int id_1, int id_2, int speed, String RorL, int degree) {
         int move_to = degree * 72;//ticsPerDegree, erst ein Degree = 72
-        if (direction == BACKWARD) {
+        if (RorL == "right") {
             int akutelle_pos = getMotorPos((byte) id_1);
             while (akutelle_pos != move_to) {
                 setMotor(id_1, SPEED_MODE, speed, 0);
                 akutelle_pos = getMotorPos((byte) id_1);
             }
         }
-        if (direction == FORWARD) {
+        if (RorL == "left") {
             int akutelle_pos = getMotorPos((byte) id_2);
             while (akutelle_pos != move_to) {
                 setMotor(id_2, SPEED_MODE, speed, 0);
@@ -240,15 +241,15 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
             int radius = calculateRadius(speed_1, speed_2);
             int Lspeed = calculateSpeedDriveInCurve(speed_1, speed_2);
             int Aspeed = (int) (Lspeed / radius * 180.0 / Math.PI);
-            setMotor(id_1, SPEED_MODE, BACKWARD * Lspeed, 0);
-            setMotor(id_2, SPEED_MODE, BACKWARD * Aspeed, 0);
+            setMotor(id_1, SPEED_MODE, -1 * Lspeed, 0);
+            setMotor(id_2, SPEED_MODE, -1 * Aspeed, 0);
         }
         if (direction == FORWARD) {
             int radius = calculateRadius(speed_1, speed_2);
             int Lspeed = calculateSpeedDriveInCurve(speed_1, speed_2);
             int Aspeed = (int) (Lspeed / radius * 180.0 / Math.PI);
-            setMotor(id_1, SPEED_MODE, FORWARD * Lspeed, 0);
-            setMotor(id_2, SPEED_MODE, FORWARD * Aspeed, 0);
+            setMotor(id_1, SPEED_MODE, 1 * Lspeed, 0);
+            setMotor(id_2, SPEED_MODE, 1 * Aspeed, 0);
         }
     }
 
@@ -257,13 +258,13 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
         int move_to = cm * 72;//ticsPerCm
         int akutelle_pos_1 = getMotorPos((byte) id_1);
         int akutelle_pos_2 = getMotorPos((byte) id_2);
-        if (direction == -BACKWARD) {
+        if (direction == BACKWARD) {
             int radius = calculateRadius(speed_1, speed_2);
             int Lspeed = calculateSpeedDriveInCurve(speed_1, speed_2);
             int Aspeed = (int) (Lspeed / radius * 180.0 / Math.PI);
             for (int i = 0; i < cm; i++) {
-                setMotor(id_1, SPEED_MODE, BACKWARD * Lspeed, akutelle_pos_1 + move_to);
-                setMotor(id_2, SPEED_MODE, BACKWARD * Aspeed, akutelle_pos_2 + move_to);
+                setMotor(id_1, SPEED_MODE, -1 * Lspeed, akutelle_pos_1 + move_to);
+                setMotor(id_2, SPEED_MODE, -1 * Aspeed, akutelle_pos_2 + move_to);
             }
         }
         if (direction == FORWARD) {
@@ -271,8 +272,8 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
             int Lspeed = calculateSpeedDriveInCurve(speed_1, speed_2);
             int Aspeed = (int) (Lspeed / radius * 180.0 / Math.PI);
             for (int i = 0; i < cm; i++) {
-                setMotor(id_1, SPEED_MODE, FORWARD * Lspeed, akutelle_pos_1 + move_to);
-                setMotor(id_2, SPEED_MODE, FORWARD * Aspeed, akutelle_pos_2 + move_to);
+                setMotor(id_1, SPEED_MODE, 1 * Lspeed, akutelle_pos_1 + move_to);
+                setMotor(id_2, SPEED_MODE, 1 * Aspeed, akutelle_pos_2 + move_to);
             }
         }
     }
@@ -295,10 +296,10 @@ public class ORB_Manager extends ORB_RemoteHandler implements Runnable {
         driveDis(id, id + 1, speed, 10);
         //mainThread.sleep(5000);
         orLabActivity.show_Toast("turn");
-        turn(id, id + 1, speed, 1);
+        turn(id, id + 1, speed, "right");
         //mainThread.sleep(5000);
         orLabActivity.show_Toast("turnDegree");
-        turnDegree(id, id + 1, speed, 1, 20);
+        turnDegree(id, id + 1, speed, "left", 20);
         //mainThread.sleep(5000);
         orLabActivity.show_Toast("steer");
         steer(id, id + 1, speed, 200, 1);

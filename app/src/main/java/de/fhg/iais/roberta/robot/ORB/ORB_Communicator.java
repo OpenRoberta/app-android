@@ -93,16 +93,14 @@ public class ORB_Communicator extends RobotCommunicator {
                 switch (type) {
                     case "startScan":
                         //startScan();
-                        if (orbManager.isConnectionReady()) {
-                            //if (true){
-                            //orLabActivity.show_Toast("orbManager.isConnectionReady()");
+                        //if (orbManager.isConnectionReady()) {
+                        if (true) {
                             reportStateChanged("connect", "connected", "0" // device address()
                                     , "brickname", "ORB via USB");
                         } else {
 
                             if (orbManager.orb_USB.isAvailable()) {
                                 //if (true) {
-                                //orLabActivity.show_Toast("orbManager.orb_USB.isAvailable");
                                 reportStateChanged("scan", "appeared", "USB" // device address()
                                         , "brickname", "ORB via USB");
                             }//TODO: move BT stuff to ORB_RemoteBT
@@ -122,12 +120,10 @@ public class ORB_Communicator extends RobotCommunicator {
                         }
                         break;
                     case "stopScan":
-                        //orLabActivity.show_Toast("case stopScan");
                         Log.d(TAG, "stop scan is not implemented for orb robot");
                         break;
                     case "connect": {
                         String addr = msg.getString("robot");
-                        //orLabActivity.show_Toast("case connect robot: " + addr);
                         if (addr.length() > 0) {
                             if (addr.equals("USB")) {
                                 orbManager.orb_USB.open(orLabActivity);
@@ -147,7 +143,6 @@ public class ORB_Communicator extends RobotCommunicator {
                         if (msg.has("propToORB")) {
                             JSONObject propToORB = msg.getJSONObject("propToORB");
                             JSONArray motor = propToORB.getJSONArray("Motor");
-                            //orLabActivity.show_Toast("case: data");
                             synchronized (orbManager.propToORB) {
                                 for (int i = 0; i < motor.length(); i++) {
                                     JSONObject m = motor.getJSONObject(i);
@@ -156,7 +151,6 @@ public class ORB_Communicator extends RobotCommunicator {
                             }
                             JSONArray servo = propToORB.getJSONArray("Servo");
                             synchronized (orbManager.propToORB) {
-                                //orLabActivity.show_Toast("synchronized(orbManager.propToORB)2");
                                 for (int i = 0; i < servo.length(); i++) {
                                     JSONObject s = servo.getJSONObject(i);
                                     orbManager.setModelServo(i, s.getInt("mode"), s.getInt("pos"));
@@ -191,32 +185,60 @@ public class ORB_Communicator extends RobotCommunicator {
                     case "command":
                         switch (msg.getString("actuator")) {
                             case "motor":
-                                int id = msg.getInt("id") - 1;
-                                orbManager.startConfigMotor(id, id + 1);
+                                int speed = 0;
+                                int speed2 = 0;
+                                int direction = 0;
+                                int distance = 0;
+                                String RorL = null;
                                 switch (msg.getString("action")) {
-                                    //direction, degree und die distance sind erstmal per hand gegeben, später aus werden die aus dem Servergeholt werden
                                     case "drive":
-                                        orbManager.driveDis(id, id + 1, 500, 20);
+                                        orbManager.startConfigMotor(0, 1);
+                                        speed = (msg.getInt("direction") == 0) ? 10 * msg.getInt("power") : -10 * msg.getInt("power");
+                                        orbManager.drive(0, 1, speed);
+                                        break;
+                                    case "drivefor":
+                                        orbManager.startConfigMotor(0, 1);//später aus konfiguration
+                                        speed = (msg.getInt("direction") == 0) ? 10 * msg.getInt("power") : -10 * msg.getInt("power");
+                                        distance = msg.getInt("distance");
+                                        orbManager.driveDis(0, 1, speed, distance);
                                         break;
                                     case "on":
-                                        int speed = (msg.getInt("direction") == 0) ? 10 * msg.getInt("power") : -10 * msg.getInt("power");
+                                        int id = msg.getInt("id") - 1;
+                                        orbManager.startConfigMotor(id);
+                                        speed = 10 * msg.getInt("power");
                                         orbManager.motorOn(id, speed);
-                                        //orbManager.turn(id, id+1, 500, 1);
                                         break;
                                     case "turn":
-                                        orbManager.turn(id, id + 1, 500, 1);
+                                        orbManager.startConfigMotor(0, 1);
+                                        speed = (msg.getInt("direction") == 0) ? 10 * msg.getInt("power") : -10 * msg.getInt("power");
+                                        RorL = msg.getString("RoL");
+                                        orbManager.turn(0, 1, speed, RorL);
                                         break;
-                                    case "turn_degree":
-                                        orbManager.turnDegree(id, id + 1, 500, 1, 100);
+                                    case "turnfor":
+                                        orbManager.startConfigMotor(0, 1);
+                                        speed = (msg.getInt("direction") == 0) ? 10 * msg.getInt("power") : -10 * msg.getInt("power");
+                                        RorL = msg.getString("RoL");
+                                        int degree = msg.getInt("angel");
+                                        orbManager.turnDegree(0, 1, speed, RorL, degree);
                                         break;
                                     case "steer":
-                                        orbManager.steer(id, id + 1, 100, 50, -1);
+                                        orbManager.startConfigMotor(0, 1);
+                                        speed = 10 * msg.getInt("powerL");
+                                        speed2 = 10 * msg.getInt("powerR");
+                                        direction = msg.getInt("direction");
+                                        orbManager.steer(0, 1, speed, speed2, direction);
                                         break;
-                                    case "steer_dis":
-                                        orbManager.steerDis(id, id + 1, 100, 500, 100, -1);
+                                    case "steerfor":
+                                        orbManager.startConfigMotor(0, 1);
+                                        speed = 10 * msg.getInt("powerL");
+                                        speed2 = 10 * msg.getInt("powerR");
+                                        direction = msg.getInt("direction");
+                                        distance = msg.getInt("distance");
+                                        orbManager.steerDis(0, 1, speed, speed2, distance, direction);
                                         break;
                                     case "stop":
-                                        orbManager.MotorStop(id);
+                                        orbManager.MotorStop(0);
+                                        orbManager.MotorStop(1);
                                         break;
                                     default:
                                         throw new NullPointerException();
