@@ -65,12 +65,14 @@ public class ORB_RemoteBT extends ORB_Remote
 
         try
         {
-            BT_Socket  = BT_Device.createRfcommSocketToServiceRecord(MY_UUID);
-            BT_Socket.connect();
+            synchronized (this) {
+                BT_Socket = BT_Device.createRfcommSocketToServiceRecord(MY_UUID);
+                BT_Socket.connect();
 
-            BT_OutStream = BT_Socket.getOutputStream();
-            BT_InStream  = BT_Socket.getInputStream();
-            isConnected = true;
+                BT_OutStream = BT_Socket.getOutputStream();
+                BT_InStream  = BT_Socket.getInputStream();
+                isConnected = true;
+            }
         }
         catch(IOException e)
         {
@@ -84,14 +86,16 @@ public class ORB_RemoteBT extends ORB_Remote
         isConnected = false;
         try
         {
-            if( BT_InStream != null ) {
-                BT_InStream.close();
-            }
-            if( BT_OutStream != null ) {
-                BT_OutStream.close();
-            }
             if( BT_Socket != null ) {
+                if( BT_InStream != null ) {
+                    BT_InStream.close();
+                }
+                if( BT_OutStream != null ) {
+                    BT_OutStream.close();
+                }
+
                 BT_Socket.close();
+                BT_Socket = null;
             }
         }
         catch( IOException e )
@@ -201,14 +205,14 @@ public class ORB_RemoteBT extends ORB_Remote
     public boolean update()
     {
         boolean ret = false;
+        synchronized (this) {
+            if( updateIn() )
+            {
+                ret = true;
+            }
 
-        if( updateIn() )
-        {
-            ret = true;
+            updateOut();
         }
-
-        updateOut();
-
         return( ret );
     }
 

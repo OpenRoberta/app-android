@@ -20,8 +20,7 @@ public class cConfigToORB
     {
         byte type     = 0;
         byte mode     = 0;
-        byte option   = 0;
-        byte reserved = 0;
+        short option   = 0;
     }
 
     //---------------------------------------------------------------
@@ -66,8 +65,8 @@ public class cConfigToORB
             {
                 buffer.put( idx++, sensor[i].type   );
                 buffer.put( idx++, sensor[i].mode   );
-                buffer.put( idx++, sensor[i].option );
-                buffer.put( idx++, (byte)0          ); // reserved
+                buffer.put( idx++, (byte)(  sensor[i].option    &0xFF) );
+                buffer.put( idx++, (byte)( (sensor[i].option>>8)&0xFF) );
             }
 
             for( int i = 0; i < 4; i++ )
@@ -115,7 +114,7 @@ public class cConfigToORB
     public void configSensor( int  idx,
                               byte type,
                               byte mode,
-                              byte option )
+                              short option )
     {
         synchronized( this )
         {

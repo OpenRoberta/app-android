@@ -28,22 +28,24 @@ public class cPropFromORB
     //---------------------------------------------------------------
     private class Sensor
     {
-        boolean isValid = false;
-        int     value   = 0;
-        int     analog1 = 0;
-        int     analog2 = 0;
-        boolean pin5    = true;
-        boolean pin6    = true;
+        boolean isValid    = false;
+        int     value0     = 0;
+        int     value1     = 0;
+        byte    type       = 0;
+        byte    descriptor = 0;
+        byte    option     = 0;
     }
 
     //---------------------------------------------------------------
     private Motor[]  motor  = new Motor[4];
     private Sensor[] sensor = new Sensor[4];
 
-    private int     Vcc    = 0;
-    private boolean D1     = true;
-    private boolean D2     = true;
-    private byte    Status = 0;
+    private int     Vcc      = 0;
+    private byte    Status   = 0;
+    private boolean D1       = true;
+    private boolean D2       = true;
+    private byte    reserved = 0;
+
 
     //---------------------------------------------------------------
     public cPropFromORB()
@@ -65,7 +67,7 @@ public class cPropFromORB
         int idx = 0;
 
         short crc =  (short)( ( data.get(idx++) & 0xFF )
-                             |( data.get(idx++) & 0xFF ) << 8);
+                |( data.get(idx++) & 0xFF ) << 8);
 
         byte id =  (byte)( ( data.get(idx++) & 0xFF) );
 
@@ -91,44 +93,37 @@ public class cPropFromORB
                 motor[i].pwr   = (short)( ((byte)data.get(idx++) & (byte)0xFF) );
 
                 motor[i].speed = (short)( ((short)data.get(idx++) & 0xFF)
-                                         |((short)data.get(idx++) & 0xFF) << 8);
+                        |((short)data.get(idx++) & 0xFF) << 8);
 
                 motor[i].pos   = (int)  (  ((int)data.get(idx++) & 0xFF)
-                                         | ((int)data.get(idx++) & 0xFF) <<  8
-                                         | ((int)data.get(idx++) & 0xFF) << 16
-                                         | ((int)data.get(idx++) & 0xFF) << 24);
+                        | ((int)data.get(idx++) & 0xFF) <<  8
+                        | ((int)data.get(idx++) & 0xFF) << 16
+                        | ((int)data.get(idx++) & 0xFF) << 24);
             }
 
             for( int i = 0; i < 4; i++ )
             {
-                sensor[i].value = (int)  (  ((int) data.get(idx++) & 0xFF)
-                                          | ((int) data.get(idx++) & 0xFF) <<  8
-                                          | ((int) data.get(idx++) & 0xFF) << 16
-                                          | ((int) data.get(idx++) & 0xFF) << 24);
+                sensor[i].value0 = (int)  (  ((int) data.get(idx++) & 0xFF)
+                        | ((int) data.get(idx++) & 0xFF) <<  8
+                        | ((int) data.get(idx++) & 0xFF) << 16
+                        | ((int) data.get(idx++) & 0xFF) << 24);
 
-                byte a = data.get(idx++);
-                byte b = data.get(idx++);
-                byte c = data.get(idx++);
 
-                sensor[i].analog1 = (int)( ((int)a & 0xFF)    	| ((int)b & 0x0F) << 8 );
-                sensor[i].analog2 = (int)( ((int)c & 0xFF)<<4 	| ((int)b & 0xF0) >> 4 );
+                byte type            = data.get(idx++);
+                sensor[i].descriptor = data.get(idx++);
+                sensor[i].option     = data.get(idx++);
+
+                sensor[i].isValid = ((type & 0x80)==0x80)? true : false;
+                sensor[i].type    = (byte)(( type & 0x07));
             }
 
-            Byte isValid = data.array()[idx++];
             Byte digital = data.array()[idx++];
+            D1 = (digital & (byte)0x40) != 0;
+            D2 = (digital & (byte)0x80) != 0;
 
-            Vcc    = ( (int)data.array()[idx++] & 0xFF );
-            Status = data.array()[idx++];
-
-            for( int i = 0; i < 4; i++ )
-            {
-                sensor[i].isValid = ((isValid & (1 << (  i  ) )) != 0) ? true : false;
-                sensor[i].pin5    = ((digital & (1 << (2*i  ) )) != 0) ? true : false;
-                sensor[i].pin6    = ((digital & (1 << (2*i+1) )) != 0) ? true : false;
-            }
-
-            D1 = (isValid & (byte)0x40) != 0;
-            D2 = (isValid & (byte)0x80) != 0;
+            Vcc      = data.get(idx++) & 0xFF;
+            Status   = data.get(idx++);
+            reserved = data.get(idx++);
         }
         return true;
     }
@@ -174,35 +169,33 @@ public class cPropFromORB
     }
 
     //---------------------------------------------------------------
+    public byte getSensorType( int idx )
+    {
+        if( 0 <= idx && idx < 4 )
+        {
+            return( sensor[idx].type );
+        }
+        return( 0 );
+    }
+
+    //---------------------------------------------------------------
+    public byte getSensorOption( int idx )
+    {
+        if( 0 <= idx && idx < 4 )
+        {
+            return( sensor[idx].option );
+        }
+        return( 0 );
+    }
+
+    //---------------------------------------------------------------
     public int getSensorValue( int idx )
     {
         if( 0 <= idx && idx < 4 )
         {
-            return( sensor[idx].value );
+            return( sensor[idx].value0 );
         }
         return( 0 );
-    }
-
-    //---------------------------------------------------------------
-    public int getSensorValueAnalog( int idx, byte ch )
-    {
-        if( 0 <= idx && idx < 4 )
-        {
-            if( ch == 0)	return( sensor[idx].analog1 );
-            else        	return( sensor[idx].analog2 );
-        }
-        return( 0 );
-    }
-
-    //---------------------------------------------------------------
-    public boolean getSensorValueDigital( int idx, byte ch )
-    {
-        if( 0 <= idx && idx < 4 )
-        {
-            if( ch == 0)	return( sensor[idx].pin5 );
-            else        	return( sensor[idx].pin6 );
-        }
-        return( false );
     }
 
     //---------------------------------------------------------------
@@ -210,7 +203,6 @@ public class cPropFromORB
     {
         if( idx == 0 )  return( D1 );
         else            return( D2 );
-
     }
 
     //---------------------------------------------------------------

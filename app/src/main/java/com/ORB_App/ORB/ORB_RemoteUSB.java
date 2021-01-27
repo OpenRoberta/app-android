@@ -102,9 +102,9 @@ public class ORB_RemoteUSB extends ORB_Remote
             final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
 
             PendingIntent permissionIntent = PendingIntent.getBroadcast( orLabActivity,
-                                                                         0,
-                                                                         new Intent(ACTION_USB_PERMISSION),
-                                                                         0 );
+                    0,
+                    new Intent(ACTION_USB_PERMISSION),
+                    0 );
             IntentFilter filter = new IntentFilter( ACTION_USB_PERMISSION );
             orLabActivity.registerReceiver( usbReceiver, filter );
 
@@ -218,12 +218,14 @@ public class ORB_RemoteUSB extends ORB_Remote
     //---------------------------------------------------------------
     private boolean updateIn()
     {
-        requestIN.queue( bufferIN, 64 );  // queue a request on the interrupt endpoint
+        if( usbConnected ) {
+            requestIN.queue(bufferIN, 64);  // queue a request on the interrupt endpoint
 
-        if( mConnection.requestWait() == requestIN ) // wait for status event
-        {
-            handler.process( bufferIN );
-            return( true );
+            if (mConnection.requestWait() == requestIN) // wait for status event
+            {
+                handler.process(bufferIN);
+                return (true);
+            }
         }
         return( false );
     }
@@ -232,14 +234,14 @@ public class ORB_RemoteUSB extends ORB_Remote
     public boolean update()
     {
         boolean ret = false;
+        synchronized (this) {
+            if( usbConnected && updateIn() )
+            {
+                ret = true;
+            }
 
-        if( usbConnected && updateIn() )
-        {
-            ret = true;
+            updateOut();
         }
-
-        updateOut();
-
         return( ret );
     }
 } // end of class

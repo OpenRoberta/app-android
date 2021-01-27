@@ -15,4 +15,8 @@ public interface RobotCommunicatorInterface {
     void open();
 
     void close();
+
+    void report();
+
+    void reportDisconnect();
 }

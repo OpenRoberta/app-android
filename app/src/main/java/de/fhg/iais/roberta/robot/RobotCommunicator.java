@@ -44,4 +44,16 @@ public class RobotCommunicator implements RobotCommunicatorInterface {
     public void close() {
         Log.d(TAG, "close");
     }
+
+    @Override
+    public void report() {
+
+    }
+
+    @Override
+    public void reportDisconnect() {
+
+    }
+
+
 }

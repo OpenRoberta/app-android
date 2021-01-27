@@ -231,6 +231,16 @@ public class ORLabActivity extends Activity {
         });
     }
 
+    public void report()
+    {
+        this.robotCommunicator.report();
+    }
+
+    public void reportDisconnect()
+    {
+        this.robotCommunicator.reportDisconnect();
+    }
+
     public void setRobot(JSONObject msg) {
         try {
             this.robotCommunicator.close();
@@ -241,11 +251,6 @@ public class ORLabActivity extends Activity {
                     //TODO inform webview
                     break;
 
-                case "wedo":
-                    this.robotCommunicator = new ORB_Communicator(this, this.orView);
-                    // TODO: replace with WeDo -----^^^
-                    //TODO inform webview
-                    break;
                 default:
                     this.robotCommunicator = new RobotCommunicator();
                     //TODO inform webview
