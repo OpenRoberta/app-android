@@ -1,0 +1,201 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>JSON</title>
+</head>
+
+<style>
+  button {width: 30vw; padding: 10px 5px;font-size:18;}
+  select {width: 30vw;padding: 10px 2px;font-size:18;}
+  
+  
+  num {text-align: top; font-family: Courier;font-size:25;}
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script>
+
+var configToORB = {
+  target:"orb",
+  type:"data",
+  configToORB:
+  { Sensor:[{type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0}],
+    Motor:[{tics:72,acc:20,Kp:30,Ki:30},
+           {tics:72,acc:20,Kp:30,Ki:30},
+           {tics:0,acc:0,Kp:0,Ki:0},
+           {tics:0,acc:0,Kp:0,Ki:0}]
+  }
+};
+
+var propToORB = {
+  target:"orb",
+  type:"data",
+  propToORB:
+  { Motor:[{mode:2,speed:-200,pos:0},
+           {mode:2,speed:200,pos:0},
+           {mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0}],
+    Servo:[{mode:0,pos:0},
+           {mode:0,pos:0}]
+  }
+};
+
+
+
+var devices = [];
+
+function identify()
+{
+  printMsg("identify ...");
+  var cmd = { target:"internal", type:"identify" };
+  send(JSON.stringify(cmd) );
+  printMsgOut( JSON.stringify(cmd) );
+}
+
+function setRobot()
+{
+  printMsg("setRobot ...");
+  var cmd = { target:"internal", type:"setRobot", robot:"orb" };
+  send(JSON.stringify(cmd) );
+  printMsgOut( JSON.stringify(cmd) );
+}
+
+function scanRobot( )
+{
+	printMsg("scanning ...");
+  devices = [];
+  var list = document.getElementById("selectDevice");
+  while( list.length > 0)
+    list.remove(0);
+  var cmd = { target:"orb", type:"startScan" };
+	send(JSON.stringify(cmd) );
+  printMsgOut( JSON.stringify(cmd) );
+}
+
+function connectRobot(r)
+{
+	printMsg("connecting ...");
+  var cmd  = { target:"orb", type:"connect", robot: "" };
+  var list = document.getElementById("selectDevice");
+  var nr = list.selectedIndex;
+  cmd.robot = devices[nr].brickid;
+  send(JSON.stringify(cmd) );
+  printMsgOut( JSON.stringify(cmd) );
+}
+
+function sendConfig()
+{
+	printMsg("send config ...");
+	var cmdStr = document.getElementById("Config").value;
+	send(cmdStr );
+  printMsgOut( cmdStr );
+}
+
+function sendProp()
+{
+	printMsg("send prop ...");
+	var cmdStr = document.getElementById("Prop").value;
+	send(cmdStr );
+  printMsgOut( cmdStr );
+}
+
+function motorStop()
+{
+	printMsg("motorStop ...");
+  var cmd = {
+    target:"orb",
+    type:"data",
+    propToORB:
+    { Motor:[{mode:0,speed:0,pos:0},
+             {mode:0,speed:0,pos:0},
+             {mode:0,speed:0,pos:0},
+             {mode:0,speed:0,pos:0}],
+      Servo:[{mode:0,pos:0},
+             {mode:0,pos:0}]
+    }
+  };
+	send( JSON.stringify(cmd) );
+  printMsgOut( JSON.stringify(cmd) );
+}
+
+function printMsg( txt )
+{
+	document.getElementById("msgIn").value = txt;
+}
+
+function printMsgOut( txt )
+{
+	document.getElementById("msgOut").value = txt;
+}
+
+function initText()
+{
+	document.getElementById("Config").value = JSON.stringify(configToORB);
+	document.getElementById("Prop").value = JSON.stringify(propToORB);
+}
+
+function appToJs( txt )
+{  
+  printMsg(txt);
+
+  res =JSON.parse(txt);
+  
+  if( res.target === "orb" && res.type ==="scan" && res.state ==="appeared")
+  {
+    devices[devices.length] = {brickid:res.brickid,brickname:res.brickname}; //e.target.responseText;
+    var opt  = document.createElement("option");
+    opt.text = res.brickname;
+    document.getElementById("selectDevice").add(opt);
+  }
+
+}
+
+init();
+
+window.setTimeout( initText, 10 );
+</script>
+
+<h2>ORB-Service - JSON</h2>
+<p>
+    <button onclick="motorStop(); window.location = 'index.html';">zurück</button>
+</p>
+
+<p>Out:</p>
+<p><textarea id="msgOut" readonly rows="10" cols="50"></textarea></p>
+<p>In:</p>
+<p><textarea id="msgIn"  readonly rows="10" cols="60"></textarea></p>
+<p>
+  <button onclick="identify();">Identify</button>
+  <button onclick="setRobot();">Set Robot</button>
+  <button onclick="scanRobot();">Scan</button>
+</p>
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connectRobot('USB');">Connect</button>
+</p>
+
+<h2>ConfigToORB</h2>
+<p><textarea id="Config" rows="10" cols="50">---</textarea>
+</p>
+
+<p><button onclick="sendConfig();">send</button>
+</p>
+
+<h2>PropToORB</h2>
+<p>
+<textarea id="Prop" rows="8" cols="60"></textarea>
+</p>
+
+<p>
+<button onclick="sendProp();">send</button>
+</p>
+
+
+</html>
+

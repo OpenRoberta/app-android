@@ -1,0 +1,141 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Sensor</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  input {width: 40vw;padding: 10px 2px;font-size:18;}
+  textarea {resize: none;}
+  
+  num {text-align: top; font-family: Courier;font-size:20;}
+
+
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+var configToORB = {
+  target:"orb",
+  type:"data",
+  configToORB:
+  { Sensor:[{type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0}],
+    Motor:[{tics:72,acc:20,Kp:30,Ki:30},
+           {tics:72,acc:20,Kp:30,Ki:30},
+           {tics:0,acc:0,Kp:0,Ki:0},
+           {tics:0,acc:0,Kp:0,Ki:0}]
+  }
+};
+
+
+function readSensor(i)
+{
+  var cmd = {target:"orb",type:"sensor",id:i};
+  r = JSON.parse( sendSync(JSON.stringify(cmd) ) );
+  return( r );
+}
+
+function update()
+{
+  var id = document.getElementById("selectPort").selectedIndex;
+  var list = document.getElementById("selectMode");
+  var mode = list[list.selectedIndex].label;
+
+  var cmd = configToORB.configToORB.Sensor[id];
+
+  switch( mode )
+  {
+    case "Analog (ON)":cmd.type=0;cmd.mode=1; break;
+    case "Analog (OFF)":cmd.type=0;cmd.mode=0; break;
+    case "EV3 (0)": cmd.type=1;cmd.mode=0; break;
+    case "EV3 (1)": cmd.type=1;cmd.mode=1; break;
+    case "EV3 (2)": cmd.type=1;cmd.mode=2; break;
+    case "EV3 (3)": cmd.type=1;cmd.mode=3; break;
+    case "EV3 (4)": cmd.type=1;cmd.mode=4; break;
+    case "NXT-US":  cmd.type=2;cmd.mode=0; break;
+    case "Touch":   cmd.type=4;cmd.mode=0; break;
+  }
+    
+  send(JSON.stringify(configToORB) );
+
+  window.setTimeout(update,100);
+}
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+
+    if( res.target === "orb" && res.type ==="data" && res.propFromORB !== undefined)
+    {
+      var id = document.getElementById("selectPort").selectedIndex;
+      
+      document.getElementById("outValid").innerHTML = ""+res.propFromORB.Sensor[id].valid;
+      document.getElementById("outType").innerHTML = ""+res.propFromORB.Sensor[id].type;
+      document.getElementById("outOption").innerHTML = ""+res.propFromORB.Sensor[id].option;
+      document.getElementById("outValue").innerHTML = "["+res.propFromORB.Sensor[id].value[0]+","+res.propFromORB.Sensor[id].value[1]+"]";
+    }
+
+
+
+
+  }
+  catch( error )
+  {
+  }
+}
+
+init();
+initConnect();
+window.setTimeout(update, 100);
+
+</script>
+
+<h2>ORB-Service - Sensor</h2>
+<p>
+  <button onclick="setRobot();javascript:history.back();">zurück</button>
+</p>
+
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connect();">connect</button>
+</p>
+
+<p>
+  <select id="selectPort">
+    <option>S1</option>
+    <option>S2</option>
+    <option>S3</option>
+    <option>S4</option>
+  </select>
+  <select id="selectMode">
+    <option>Analog (ON)</option>
+    <option>Analog (OFF)</option>
+    <option>EV3 (0)</option>
+    <option>EV3 (1)</option>
+    <option>EV3 (2)</option>
+    <option>EV3 (3)</option>
+    <option>EV3 (4)</option>
+    <option>NXT-US</option>
+    <option>Touch</option>
+  </select>
+
+</p>
+
+<h3>Sensor:</h3>
+<p><num>Valid: </num> <num id="outValid" >---</num></p>
+<p><num>Type:  </num> <num id="outType"  >---</num></p>
+<p><num>Option:</num> <num id="outOption">---</num></p>
+<p><num>Value: </num> <num id="outValue" >---</num></p>
+</html>

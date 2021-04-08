@@ -1,0 +1,90 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Download</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  input {width: 40vw;padding: 10px 2px;font-size:18;}
+  textarea {resize: none;}
+  
+  num {text-align: top; font-family: Courier;font-size:20;}
+
+
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+
+    if( res.target === "orb" && res.type ==="data" && res.propFromORB !== undefined)
+    {
+      var id = document.getElementById("selectPort").selectedIndex;
+      
+      document.getElementById("outValid").innerHTML = ""+res.propFromORB.Sensor[id].valid;
+      document.getElementById("outType").innerHTML = ""+res.propFromORB.Sensor[id].type;
+      document.getElementById("outOption").innerHTML = ""+res.propFromORB.Sensor[id].option;
+      document.getElementById("outValue").innerHTML = "["+res.propFromORB.Sensor[id].value[0]+","+res.propFromORB.Sensor[id].value[1]+"]";
+    }
+  }
+  catch( error )
+  {
+  }
+}
+
+function download()
+{
+var cmd = "[305419896,2596069104,1611514078,11,2,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]";
+send(cmd, "download" );
+
+}
+
+function download2()
+{
+var cmd = {target:"orb", type:"download",
+           id:"RAM",data:
+                    [305419896,2596069104,1611514078,100,101,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+                    };
+send(JSON.stringify(cmd), "download" );
+}
+
+init();
+initConnect();
+
+</script>
+
+<h2>ORB-Service - Download 3</h2>
+<p>
+  <button onclick="setRobot();javascript:history.back();">zurück</button>
+</p>
+
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connect();">connect</button>
+</p>
+
+<p>
+  <select id="memoryLocation">
+    <option>RAM</option>
+    <option>Flash</option>
+    <option>Prog</option>
+  </select>
+  <button onclick="download();">download</button>
+  <button onclick="download2();">download 2</button>
+</p>
+<h2>Daten</h2>
+<p>
+<textarea id="Daten" rows="8" cols="60">Test</textarea>
+</p>
+</html>

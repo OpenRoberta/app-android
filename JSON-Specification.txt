@@ -1,0 +1,109 @@
+Siehe: ORB-Manual.pdf, Kap. 8 Datenstrukturen 
+
+JS -> App, identify
+===================
+{"target" :"internal",
+ "type"   :"identify"
+}
+
+App -> JS, identify/answer
+==========================
+{"target"        :"internal",
+ "type"          :"identify",
+ "name"          :"OpenRoberta",
+ "app_version"   :"1.0",
+ "device_version":26,
+ "model"         :"SM-A320FL"
+}
+
+JS -> App, set robot
+===================
+{"target":"internal",
+ "type"  :"setRobot",
+ "robot":"orb"
+}
+
+JS -> App, scan
+===============
+{"target" :"orb",
+ "type"   :"startScan"
+}
+
+App -> JS, scan/answer
+======================
+{"target"   :"orb",
+ "type"     :"scan",
+ "state"    :"appeared",
+ "brickid"  :"00:06:66:69:38:69",
+ "brickname":"ORB-2 3869" 
+}
+
+JS -> App, connect
+==================
+{"target":"orb",
+ "type"  :"connect",
+ "robot" :"00:06:66:69:38:69"
+}
+
+App -> JS, connect/answer
+=========================
+{"target":"orb",
+ "type"  :"connect",
+ "state":"connected",
+ "brickid"  :"00:06:66:69:38:69",
+ "brickname":"ORB-2 3869"
+}
+
+
+JS -> App, configToORB
+======================
+{ "target":"orb",
+  "type"  :"data",
+  "configToORB":
+  { "Sensor":[{"type":0,"mode":0,"option":0},
+              {"type":0,"mode":0,"option":0},
+              {"type":0,"mode":0,"option":0},
+              {"type":0,"mode":0,"option":0}],
+
+    "Motor":[{"tics":0,"acc":0,"Kp":0,"Ki":0},
+             {"tics":0,"acc":0,"Kp":0,"Ki":0},
+             {"tics":0,"acc":0,"Kp":0,"Ki":0},
+             {"tics":0,"acc":0,"Kp":0,"Ki":0}]
+  }
+}
+
+JS -> App, propToORB
+====================
+{ "target":"orb",
+  "type":"data",
+  "propToORB":
+  { "Motor":[{"mode":0,"speed":0,"pos":0},
+             {"mode":0,"speed":0,"pos":0},
+             {"mode":0,"speed":0,"pos":0},
+             {"mode":0,"speed":0,"pos":0}],
+
+    "Servo":[{"mode":0,"pos":0},
+             {"mode":0,"pos":0}]
+  }
+}
+
+App -> JS, propFromORB
+======================
+{ "target":"orb",
+  "type":"data", 
+  "propFromORB":
+    { "Motor":[{"pwr":0,"speed":0,"pos":0},
+               {"pwr":0,"speed":0,"pos":0},
+               {"pwr":0,"speed":0,"pos":0},
+               {"pwr":0,"speed":0,"pos":0}],
+
+      "Sensor":[{"valid":false,"type":0,"option":0,"value":[0,0]},
+                {"valid":false,"type":0,"option":0,"value":[0,0]},
+                {"valid":false,"type":0,"option":0,"value":[0,0]},
+                {"valid":false,"type":0,"option":0,"value":[0,0]}],
+
+      "Vcc":0,
+      "Digital":[false,false], 
+      "Status":0
+    }
+}

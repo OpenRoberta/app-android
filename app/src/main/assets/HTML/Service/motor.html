@@ -1,0 +1,156 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Motor</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  textarea {resize: none;}
+  
+  num {text-align: top; font-family: Courier;font-size:25;}
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+var configToORB = {
+  target:"orb",
+  type:"data",
+  configToORB:
+  { Sensor:[{type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0}],
+    Motor:[{tics:72,acc:20,Kp:30,Ki:30},
+           {tics:72,acc:20,Kp:30,Ki:30},
+           {tics:0,acc:0,Kp:0,Ki:0},
+           {tics:0,acc:0,Kp:0,Ki:0}]
+  }
+};
+
+var propToORB = {
+  target:"orb",
+  type:"data",
+  propToORB:
+  { Motor:[{mode:2,speed:-200,pos:0},
+           {mode:2,speed:200,pos:0},
+           {mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0}],
+    Servo:[{mode:0,pos:0},
+           {mode:0,pos:0}]
+  }
+};
+
+function start()
+{
+  var id = document.getElementById("selectPort").selectedIndex;
+  var mode = document.getElementById("selectMode").selectedIndex;
+
+  var speed = 200;
+  if( mode == 3 )
+    speed = 1000;
+
+  propToORB.propToORB.Motor[id].mode = mode;
+  propToORB.propToORB.Motor[id].speed = speed;
+  propToORB.propToORB.Motor[id].pos = 0;
+  send( JSON.stringify(configToORB) );
+  send( JSON.stringify(propToORB) );
+}
+
+function stop()
+{
+  var id = document.getElementById("selectPort").selectedIndex;
+  propToORB.propToORB.Motor[id].mode = 0;
+  propToORB.propToORB.Motor[id].speed = 0;
+  propToORB.propToORB.Motor[id].pos = 0;
+  
+  send( JSON.stringify(propToORB) );
+}
+
+function stopAll()
+{
+var cmd = {
+  target:"orb",
+  type:"data",
+  propToORB:
+  { Motor:[{mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0}],
+    Servo:[{mode:0,pos:0},
+           {mode:0,pos:0}]
+  }};
+
+  send(JSON.stringify(cmd) );
+  
+  setRobot();
+}
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+    
+    if( res.target === "orb" && res.type ==="data" && res.propFromORB !== undefined)
+    {
+      var id = document.getElementById("selectPort").selectedIndex;
+      //var r = readMotor(id);
+      
+      document.getElementById("outPwr"  ).innerHTML = ""+res.propFromORB.Motor[id].pwr;
+      document.getElementById("outSpeed").innerHTML = ""+res.propFromORB.Motor[id].speed;
+      document.getElementById("outPos"  ).innerHTML = ""+res.propFromORB.Motor[id].pos;
+    }
+  }
+  catch( error )
+  {
+  }
+}
+
+init();
+initConnect();
+
+</script>
+
+<h2>ORB-Service - Motor</h2>
+<p>
+  <button onclick="stopAll();window.location = 'index.html';">zurück</button>
+  <button onclick="stopAll();">stop all</button>
+</p>
+
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connect();send( JSON.stringify(configToORB) );
+  ">connect</button>
+</p>
+
+<p>
+  <select id="selectPort">
+    <option>M1</option>
+    <option>M2</option>
+    <option>M3</option>
+    <option>M4</option>
+  </select>
+  <select id="selectMode">
+    <option>Power</option>
+    <option>Brake</option>
+    <option>Speed</option>
+    <option>Move</option>
+  </select>
+</p>
+<p>
+  <button onclick="start();">start</button>
+  <button onclick="stop();">stop</button>
+</p>
+
+<h3>Motor:</h3>
+<p><num>Pwr:  </num> <num id="outPwr"  >---</num></p>
+<p><num>Speed:</num> <num id="outSpeed">---</num></p>
+<p><num>Pos:  </num> <num id="outPos"  >---</num></p>
+</html>
