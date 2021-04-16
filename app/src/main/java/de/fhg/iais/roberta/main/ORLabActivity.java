@@ -30,7 +30,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,8 +38,10 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
 
-import de.fhg.iais.roberta.robot.ORB.ORB_Communicator;
 import de.fhg.iais.roberta.robot.RobotCommunicator;
+import de.fhg.iais.roberta.robot.wedo.WeDoCommunicator;
+import de.fhg.iais.roberta.robot.orb.ORB_Communicator;
+import de.fhg.iais.roberta.device.Monitor.MonitorActivity;
 
 /**
  * <h1>Open Roberta Mobile</h1>
@@ -77,13 +78,16 @@ public class ORLabActivity extends Activity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String orUrl = sharedPreferences.getString("prefUrl", "");
 
+//TB: URL kann auch lokal sein, App muss auch ohne WiFi laufen ...
+/*
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
         if (wifi == null || !wifi.isConnected()) {
             Util.showCloseNoWifiAlert(ORLabActivity.this, R.string.wifi_not_connected);
         }
-
+*/
+//end
         this.orView = findViewById(R.id.orView);
         this.progressBar = findViewById(R.id.progressBar);
         this.robotCommunicator = new RobotCommunicator();
@@ -91,9 +95,6 @@ public class ORLabActivity extends Activity {
         this.orView.getSettings().setDomStorageEnabled(true);
         this.orView.getSettings().setLoadWithOverviewMode(true);
         this.orView.getSettings().setUseWideViewPort(true);
-
-        this.orView.getSettings().setAppCacheEnabled(false);
-
         this.orView.requestFocus(View.FOCUS_DOWN);
         this.orView.addJavascriptInterface(this, "OpenRoberta");
         this.orView.setDownloadListener(new DownloadListener() {
@@ -136,6 +137,7 @@ public class ORLabActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+//TB:
         robotCommunicator.close();
         super.onDestroy();
     }
@@ -231,26 +233,19 @@ public class ORLabActivity extends Activity {
         });
     }
 
-    public void report()
-    {
-        this.robotCommunicator.report();
-    }
-
-    public void reportDisconnect()
-    {
-        this.robotCommunicator.reportDisconnect();
-    }
-
     public void setRobot(JSONObject msg) {
         try {
             this.robotCommunicator.close();
             String robot = msg.getString("robot");
             switch (robot) {
-                case "orb":
-                    this.robotCommunicator = new ORB_Communicator(this, this.orView);
+                case "wedo":
+                    this.robotCommunicator = new WeDoCommunicator(this, this.orView);
                     //TODO inform webview
                     break;
-
+                case "orb":
+                    this.robotCommunicator = new ORB_Communicator( this, this.orView );
+                    //TODO inform webview
+                    break;
                 default:
                     this.robotCommunicator = new RobotCommunicator();
                     //TODO inform webview
@@ -276,6 +271,14 @@ public class ORLabActivity extends Activity {
                         AlertDialog aboutDialog = Util.createAboutDialog(ORLabActivity.this, orView);
                         aboutDialog.show();
                         break;
+//TB: Lokale URL laden
+                    case R.id.service:
+                        orView.loadUrl("file:///android_asset/HTML/Service/index.html");
+                        break;
+//TB: Monitor starten
+                    case R.id.monitor:
+                        ORLabActivity.this.startMonitor();
+                        break;
                     case R.id.exit:
                         ORLabActivity.this.finish();
                         System.exit(0);
@@ -284,6 +287,23 @@ public class ORLabActivity extends Activity {
             }
         });
         popup.show();
+    }
+
+    //---------------------------------------------------------------------------------------------
+    //TB: Damit App nicht ungewollt beendet wird, wenn Home-Button versehentlich betaetigt wird,
+    //    wird diese Methode ueberschrieben.
+    @Override
+    public void onBackPressed() {
+
+    }
+
+    //TB:
+    //---------------------------------------------------------------------------------------------
+    private void startMonitor()
+    {
+        MonitorActivity.DataHolder.setData( "" );
+        Intent intent = new Intent(this, MonitorActivity.class);
+        startActivity(intent);
     }
 
     public WebView getOrView() {
@@ -356,14 +376,18 @@ public class ORLabActivity extends Activity {
          */
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(request.getUrl().toString()));
-            startActivity(browserIntent);
+
+            //TB: Vorlaeufig sollen lokale Links in WebView ausgefuehrt werden
+            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ) {
+                if( request.isRedirect() == false ) {
+                    return false;
+                }
+            }
+            //end
+
+            Intent browserIntent = new Intent( Intent.ACTION_VIEW, Uri.parse( request.getUrl().toString() ) );
+            startActivity( browserIntent );
             return true;
         }
     }
-
-    public void show_Toast(String t) {
-        Toast.makeText(this, t, Toast.LENGTH_LONG).show();
-    }
-
 }

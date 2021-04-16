@@ -1,0 +1,148 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Sensor</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;;margin: 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  input {width: 40vw;padding: 10px 2px;font-size:18;}
+  textarea {resize: none;}
+  
+  num {text-align: top; font-family: Courier;font-size:20;}
+
+
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+var configSensor = {
+  target:"orb",
+  type:"configToAS",
+  data:
+  { name:"test", type:0}
+};
+
+var commandToAS = {
+  target:"orb",
+  type:"commandToAS",
+  data:
+  { cmd:""}
+};
+
+
+function readSensor(i)
+{
+  var cmd = {target:"orb",type:"sensor",id:i};
+  r = JSON.parse( sendSync(JSON.stringify(cmd) ) );
+  return( r );
+}
+
+function reset()
+{
+  send(JSON.stringify(commandToAS) );
+}
+
+function update()
+{
+  var list = document.getElementById("selectType");
+  var type = list[list.selectedIndex].label;
+
+  switch( type )
+  {
+    case "AmbientLight":      configSensor.data.type= 5; break;
+    case "Gravity":           configSensor.data.type= 9; break;
+    case "LinearAcceleration":configSensor.data.type=10; break;
+    case "MagneticField":     configSensor.data.type= 2; break;
+    case "Rotation":          configSensor.data.type=11; break;
+    case "Pressure":          configSensor.data.type= 6; break;
+    case "Temperature":       configSensor.data.type=13; break;
+    case "Geomagnetic":       configSensor.data.type=20; break;
+  }
+  configSensor.data.name = type;
+    
+  send(JSON.stringify(configSensor) );
+
+//  window.setTimeout(update,1000);
+}
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+
+    if( res.target === "orb" && res.type ==="sensorFromAS" ) //&& res.data !== undefined)
+    {
+      document.getElementById("msgIn").value = txt;
+      //document.getElementById("outValid").innerHTML = ""+res.propFromORB.Sensor[id].valid;
+      //document.getElementById("outType").innerHTML = ""+res.propFromORB.Sensor[id].type;
+	  var list = document.getElementById("selectType");
+	  var type = list[list.selectedIndex].label;
+
+	  if( res.data[type] !== undefined)
+	  {
+		  var str = "";
+		  for(var i=0;i < res.data[type].length;i++)
+			str = str  + "\n"+ res.data[type][i].toPrecision(3);
+		  
+		  document.getElementById("outType").innerHTML = type;
+		  document.getElementById("outValue").innerHTML = str;
+	  }
+	  else
+	  {
+		  document.getElementById("outType").innerHTML = "---";
+		  document.getElementById("outValue").innerHTML = "---";
+	  }
+      
+    }
+  }
+  catch( error )
+  {
+  }
+}
+
+init();
+initConnect();
+
+//window.setTimeout(update, 1000);
+
+</script>
+
+<h2>ORB-Service - Sensor</h2>
+<p>
+  <button onclick="setRobot();reset();javascript:history.back();">zurück</button>
+</p>
+
+<p>
+  <button onclick="reset();">reset all</button>
+</p>
+
+<p>
+  <select id="selectType" onclick="update();" onchange="update();">
+    <option>AmbientLight</option>
+    <option>Gravity</option>
+    <option>LinearAcceleration</option>
+    <option>MagneticField</option>
+    <option>Rotation</option>
+    <option>Pressure</option>
+    <option>Temperature</option>
+    <option>Geomagnetic</option>
+  </select>
+
+</p>
+
+<h3>Android-Sensor:</h3>
+<p><num>Valid: </num> <num id="outValid" >---</num></p>
+<p><num>Type:  </num> <num id="outType"  >---</num></p>
+<p><num>Value: </num> <num id="outValue" >---</num></p>
+<p>In:</p>
+<p><textarea id="msgIn"  readonly rows="10" cols="40"></textarea></p>
+<p>
+
+</html>

@@ -12,11 +12,5 @@ public interface RobotCommunicatorInterface {
 
     void reportStateChanged(String type, String state, String brickid, String... strg);
 
-    void open();
-
     void close();
-
-    void report();
-
-    void reportDisconnect();
 }

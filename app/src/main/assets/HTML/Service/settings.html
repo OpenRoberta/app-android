@@ -1,0 +1,120 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Settings</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;margin: 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  input {padding: 2px 2px;font-family: Courier;font-size:24;}
+  .inputName {width: 70vw;font-size:20;}
+  textarea {resize: none;}
+  
+  num {text-align: top; padding: 2px 2px; font-family: Courier;font-size:24;}
+  tr {text-align: top; font-size:20;}
+
+
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+var settingsToORB = {
+  target:"orb",
+  type:"settingsToORB",
+  data:
+  { update:false,
+    clearMemory:false,
+    Name:"---",
+    VCC_ok:0,
+    VCC_low:0
+  }
+};
+
+var settingsFromORB = {
+  target:"orb",
+  type:"settingsFromORB",
+  data:
+  { Version:[0,0],
+    Board:[0,0],
+    Name:"test",
+    VCC_ok:7.1,
+    VCC_low:6.9
+  }
+};
+
+function sendReq(flag)
+{
+  if( flag && confirm("Change ORB-Settings?") )
+  {
+    settingsToORB.data.update  = true;
+    settingsToORB.data.Name    = document.getElementById("idName").value;
+    settingsToORB.data.VCC_ok  = document.getElementById("idVCC_ok").value;
+    settingsToORB.data.VCC_low = document.getElementById("idVCC_low").value;
+  }
+  else
+  {
+    settingsToORB.data.update = false;
+  }
+  send(JSON.stringify(settingsToORB) );
+
+  document.getElementById("idVersion").innerHTML = "";
+  document.getElementById("idBoard").innerHTML   = "";
+  document.getElementById("idName").value = "";
+  document.getElementById("idVCC_ok").value = "";
+  document.getElementById("idVCC_low").value = "";
+}
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+
+    if( res.target === "orb" && res.type ==="settingsFromORB" && res.data !== undefined)
+    {
+      document.getElementById("idVersion").innerHTML  = ""+ res.data.Version[0]+"."+res.data.Version[1];
+      document.getElementById("idBoard").innerHTML    = ""+ res.data.Board[0]+"."+res.data.Board[1];
+      document.getElementById("idName").value = ""+ res.data.Name;
+      document.getElementById("idVCC_ok").value = ""+ res.data.VCC_ok;
+      document.getElementById("idVCC_low").value = ""+ res.data.VCC_low;
+    }
+  }
+  catch( error )
+  {
+  }
+}
+
+init();
+initConnect();
+
+</script>
+
+<h2>ORB-Service - Settings</h2>
+<p>
+  <button onclick="setRobot();javascript:history.back();">zurück</button>
+</p>
+
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connect();sendReq(false)">connect</button>
+</p>
+
+
+<table>
+<tr><td>Version: </td><td><num id="idVersion" ></num></td></tr>
+<tr><td>Board:   </td><td><num id="idBoard"   ></num></td></tr>
+<tr><td>Name:    </td><td ><input type="text" id="idName" value =""  class="inputName" maxlength="20"></input></td></tr>
+<tr><td>VCC ok:  </td><td><input type="number" id="idVCC_ok" min="5" max="9" step="0.1" value="" size ="5"  width="5em"></input></td></tr>
+<tr><td>VCC low: </td><td><input type="number" id="idVCC_low" min="5" max="9" step="0.1" value="" size ="5"  width="5em"></input></td></tr>
+</table>
+
+<p>
+  <button onclick="sendReq(true);">send</button>
+</p>
+</html>

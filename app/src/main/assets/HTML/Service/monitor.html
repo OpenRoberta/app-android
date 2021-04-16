@@ -1,0 +1,195 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <title>Monitor</title>
+</head>
+
+<style>
+  button {width: 40vw; padding: 10px 5px;font-size:18;}
+  select {width: 40vw;padding: 10px 2px;font-size:18;}
+  input {padding: 2px 2px;font-family: Courier;font-size:24;}
+  .inputName {width: 70vw;font-size:20;}
+  textarea {resize: none;}
+  
+  num {text-align: top; padding: 2px 2px; font-family: Courier;font-size:24;}
+  tr {text-align: top; font-size:20;}
+
+
+</style>
+
+<script type="text/javascript" src="orb.js"></script>
+<script type="text/javascript" src="connect.js"></script>
+<script>
+
+var monitorToApp = {
+  target:"orb",
+  type:"texteToMon",
+  data:{texte:["","","",""]}
+};
+
+var monitorFromApp = {
+  target:"orb",
+  type:"keyFromMon",
+  data:{key:0}
+};
+
+var monitorLayout = {
+  target:"orb",
+  type:"layoutToMon",
+  data: {
+    "Tasten": {
+      "A1"  : "",
+      "A2"  : "-",
+      "A3"  : "+",
+      "A4"  : "",
+      "A5"  : "",
+      "A6"  : "",
+      "A7"  : "",
+      "A8"  : "",
+      "B1"  : "",
+      "B2"  : "&#8686;",
+      "B3"  : "",
+      "B4"  : "",
+      "B5"  : "&#8679;",
+      "B6"  : "",
+      "B7"  : "&#8634;",
+      "B8"  : "",
+      "B9"  : "&#8635;",
+      "B10" : "",
+      "B11" : "&#8681;",
+      "B12" : "",
+      "C1"  : ""
+    }
+  }
+};
+
+var configToORB = {
+  target:"orb",
+  type:"configToORB",
+  data:
+  { Sensor:[{type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0},
+            {type:0,mode:0,option:0}],
+    Motor:[{tics:142,acc:20,Kp:50,Ki:30},
+           {tics:142,acc:20,Kp:50,Ki:30},
+           {tics:0,acc:0,Kp:0,Ki:0},
+           {tics:0,acc:0,Kp:0,Ki:0}]
+  }
+};
+
+var propToORB = {
+  target:"orb",
+  type:"propToORB",
+  data:
+  { Motor:[{mode:2,speed:0,pos:0},
+           {mode:2,speed:0,pos:0},
+           {mode:0,speed:0,pos:0},
+           {mode:0,speed:0,pos:0}],
+    Servo:[{mode:0,pos:0},
+           {mode:0,pos:0}]
+  }
+};
+
+var speed = 200;
+
+function start(li,re)
+{
+  propToORB.data.Motor[0].mode  = 2;
+  propToORB.data.Motor[0].speed = -li*speed;
+  propToORB.data.Motor[1].mode  = 2;
+  propToORB.data.Motor[1].speed =  re*speed;
+  send( JSON.stringify(configToORB) );
+  send( JSON.stringify(propToORB) );
+}
+
+function stop()
+{
+  propToORB.data.Motor[0].mode  = 0;
+  propToORB.data.Motor[0].speed = 0;
+  propToORB.data.Motor[1].mode  = 0;
+  propToORB.data.Motor[1].speed = 0;
+  send( JSON.stringify(configToORB) );
+  send( JSON.stringify(propToORB) );
+}
+
+
+function sendLayout()
+{
+send( JSON.stringify(monitorLayout) );
+}
+
+var keyLast = 0;
+var keyNow  = 0;
+var cnt = 0;
+
+function appToJs(txt)
+{
+  try {
+    res = JSON.parse(txt);
+    scanReply(document.getElementById("selectDevice"), res);
+
+    if( res.target === "orb" && res.type ==="keyFromMon" ) //&& res.key !== undefined)
+    {
+       cnt++;
+       monitorToApp.data.texte[0] = "cnt:"+cnt;
+
+       keyNow = res.data.key;
+       var keyEvent = 0;
+       if( keyNow != 0 && keyLast == 0 )
+       {
+         monitorToApp.data.texte[1] = "key event:"+keyNow;
+         keyEvent = keyNow;
+       }
+       keyLast = keyNow;
+       
+       switch(keyEvent)
+       {
+         case 2: speed = speed - 50;  break;
+         case 3: speed = speed + 50;  break;
+       }
+       
+       switch( keyNow )
+       {
+         case 10: start( 2, 2);  break;
+         case 13: start( 1, 1);  break;
+         case 15: start(-1, 1);  break;
+         case 17: start( 1,-1);  break;
+         case 19: start(-1,-1); break;
+         default: stop();
+       }
+       
+       monitorToApp.data.texte[2] = "key state:"+keyNow;
+       monitorToApp.data.texte[3] = "speed:"+speed;
+    
+       send(JSON.stringify(monitorToApp) );
+    }
+  }
+  catch( error )
+  {
+  }
+}
+
+init();
+initConnect();
+window.setTimeout(sendLayout, 100);
+
+</script>
+
+<h2>ORB-Service - Monitor</h2>
+<p>
+  <button onclick="setRobot();javascript:history.back();">zurück</button>
+</p>
+
+<p>
+  <select id="selectDevice">
+  </select>
+  <button onclick="connect();">connect</button>
+</p>
+
+<p>
+  <button onclick="sendLayout();">send layout</button>
+</p>
+</html>

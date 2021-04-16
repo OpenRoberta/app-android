@@ -1,376 +1,700 @@
 //*******************************************************************
 /*!
-\file   ORB_Remote_Handler.java
+\file   ORB_Communicator.java
 \author Thomas Breuer
 \date   21.02.2019
 \brief
 */
 
 //*******************************************************************
-package de.fhg.iais.roberta.robot.ORB;
+package de.fhg.iais.roberta.robot.orb;
 
 //*******************************************************************
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.hardware.SensorEvent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.webkit.WebView;
-
-import com.ORB_App.ORB_Manager;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Set;
+import java.nio.ByteBuffer;
 
 import de.fhg.iais.roberta.main.ORLabActivity;
 import de.fhg.iais.roberta.robot.RobotCommunicator;
+import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Manager;
+import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Report;
+import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Sensor;
+import de.fhg.iais.roberta.device.Monitor.Monitor_Manager;
+import de.fhg.iais.roberta.device.Monitor.Monitor_Report;
+import de.fhg.iais.roberta.device.ORB.ORB_Manager;
+import de.fhg.iais.roberta.device.ORB.ORB_Report;
+import de.fhg.iais.roberta.device.ORB.cPropFromORB;
 
 //*******************************************************************
-public class ORB_Communicator extends RobotCommunicator
+public class ORB_Communicator extends    RobotCommunicator
+                              implements Runnable,
+                                         ORB_Report,
+                                         AndroidSensor_Report,
+                                         Monitor_Report
 {
     //---------------------------------------------------------------
     private static final String TAG = ORB_Communicator.class.getSimpleName();
+    private WebView               webView;
+    private ORB_Manager           orbManager;
+    private AndroidSensor_Manager androidSensorManager;
+    private Monitor_Manager       monitorManager;
 
-    private ORLabActivity orLabActivity;
-    private WebView       mainView;
-    private ORB_Manager   orbManager;
-
-    //---------------------------------------------------------------
-    public ORB_Communicator(ORLabActivity orLabActivity, WebView mainView )
-    {
-        this.orLabActivity = orLabActivity;
-        this.mainView      = mainView;
-
-        orbManager = new ORB_Manager(orLabActivity);
-        orbManager.init();
-
-        this.ROBOT = "orb";
-
-        Log.d(TAG, "OrbCommunicator instantiated");
-    }
+    private java.lang.Thread mainThread;
+    private boolean runMainThread = false;
 
     //---------------------------------------------------------------
-    @Override
-    public void open()
+    public ORB_Communicator( ORLabActivity orLabActivity, WebView webView )
     {
-        orbManager.open( );
+        this.ROBOT   = "orb";
+        this.webView = webView;
+
+        orbManager           = new ORB_Manager          (  this, orLabActivity );
+        androidSensorManager = new AndroidSensor_Manager( this, orLabActivity );
+        monitorManager       = new Monitor_Manager      ( this );
+
+        mainThread = new Thread(this);
+        if( mainThread.getState() == Thread.State.NEW )
+        {
+            runMainThread = true;
+            mainThread.start();
+            mainThread.setPriority( 8 ); //MAX_PRIORITY );
+        }
+        Log.d( TAG, "OrbCommunicator instantiated" );
     }
 
     //---------------------------------------------------------------
     @Override
     public void close()
     {
+        runMainThread = false;
         orbManager.close();
+        androidSensorManager.close();
+        monitorManager.close();
     }
 
     //---------------------------------------------------------------
-//TODO: function required?
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void startScan()
+    @Override
+    public void run()
     {
-        if(orbManager.isConnectionReady())
+        while ( runMainThread )
         {
-            reportStateChanged("connect", "connected", "0" /*BT_Device.getAddress()*/ ,"brickname", /*BT_Device.getName()+*/"ORB via USB");
-//            reportStateChanged("scan", "appeared", "ORB Device ID", "brickname", "ORB Device Name");
-        }
-        else
-        {
-            //   reportScanError("USB device not connected");
-            //   Util.showAlert(this.orLabActivity, "USB device not connected");
+            orbManager.update();
+            androidSensorManager.update();
+            monitorManager.update();
+
+            try
+            {
+                Thread.sleep(10);
+            }
+            catch (InterruptedException e)
+            {
+            }
         }
     }
 
     //---------------------------------------------------------------
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
-    public void jsToRobot(JSONObject msg)
-    {
-        Log.d(TAG, "jsToRobot: " + msg.toString());
-        try {
-            String target = msg.getString("target");
-            String type = msg.getString("type");
-            if (target.equals(ROBOT))
-            {
-                switch (type)
-                {
-                    case "startScan":
-                        //startScan();
-                        if(orbManager.isConnectionReady())
-                        {
-                            reportStateChanged("connect", "connected", "0" // device address()
-                                    , "brickname", "ORB via USB");
-                        }
-                        else
-                        {
-                            if( orbManager.orb_USB.isAvailable()  )
-                            {
-                                reportStateChanged("scan", "appeared", "USB" // device address()
-                                        , "brickname", "ORB via USB");
-                            }
-                            else // check BT
-                            {
-//TODO: move BT stuff to ORB_RemoteBT
-                                BluetoothAdapter BT_Adapter;
-                                Set<BluetoothDevice> BT_PairedDevices;
-
-                                BT_Adapter = BluetoothAdapter.getDefaultAdapter();
-                                BT_PairedDevices = BT_Adapter.getBondedDevices();
-
-                                ArrayList<String> list = new ArrayList<String>();
-
-                                for (BluetoothDevice lBT_Device : BT_PairedDevices) {
-                                    reportStateChanged("scan", "appeared", lBT_Device.getAddress(), "brickname", lBT_Device.getName());
-                                }
-                            }
-                        }
-                        break;
-
-                    case "stopScan":
-
-                        // TODO:
-                        // diese Funktion sollte eigentlich an anderer Stelle aufgerufen werden,
-                        // aber "connect" wird nicht ausgefuehrt. Fehler im JS ?
-                        // ****************************************
-                        // orbManager.orb_USB.open(orLabActivity);
-                        // ****************************************
-
-                        Log.d(TAG, "stop scan is not implemented for orb robot");
-                        break;
-
-                    case "connect":
-                    {
-                        String addr = msg.getString("robot");
-                        orbManager.orb_USB.close();
-                        orbManager.orb_BT.close();
-
-                        if (addr.length() > 0) {
-                            if (addr.equals("USB")) {
-                                orbManager.orb_USB.open(orLabActivity);
-                                reportStateChanged("connect", "connected", "USB", "brickname", "ORB via USB");
-                            }
-                            else
-                            {
-                                BluetoothDevice BT_Device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(addr);
-                                orbManager.orb_BT.open(BT_Device);
-                                reportStateChanged("connect", "connected", BT_Device.getAddress(), "brickname", BT_Device.getName());
-                            }
-                        }
-                    }
-                    break;
-
-                    case "disconnect":
-                        Log.d(TAG, "disconnect is not implemented for orb robot");
-                        break;
-
-                    case "data":
-                        if( msg.has("propToORB") )
-                        {
-                            JSONObject propToORB = msg.getJSONObject("propToORB");
-
-                            JSONArray motor = propToORB.getJSONArray("Motor");
-
-                            synchronized (orbManager.propToORB )
-                            {
-                                for (int i = 0; i < motor.length(); i++)
-                                {
-                                    JSONObject m = motor.getJSONObject(i);
-                                    orbManager.setMotor(i, m.getInt("mode"), m.getInt("speed"), m.getInt("pos"));
-                                }
-                            }
-
-                            JSONArray servo= propToORB.getJSONArray("Servo");
-
-                            synchronized (orbManager.propToORB )
-                            {
-                                for (int i = 0; i < servo.length(); i++)
-                                {
-                                    JSONObject s = servo.getJSONObject(i);
-                                    orbManager.setModelServo(i, s.getInt("mode"), s.getInt("pos"));
-                                }
-                            }
-
-                            /// reply
-                            //    JSONObject out = new JSONObject();
-                            //    robotToJs( out );
-
-                            //    final JSONObject answer = out;
-                            //    sendToJS( answer.toString() );
-                        }
-                        else if( msg.has("configToORB") )
-                        {
-                            JSONObject configToORB = msg.getJSONObject("configToORB");
-                            JSONArray motor= configToORB.getJSONArray("Motor");
-
-                            synchronized (orbManager.configToORB )
-                            {
-                                for(byte i=0;i<motor.length();i++)
-                                {
-                                    JSONObject m = motor.getJSONObject(i);
-                                    orbManager.configMotor(i,m.getInt("tics"),m.getInt("acc"),m.getInt("Kp"),m.getInt("Ki"));
-                                }
-                            }
-
-                            JSONArray sensor= configToORB.getJSONArray("Sensor");
-
-                            synchronized (orbManager.configToORB )
-                            {
-                                for(byte i=0;i<sensor.length();i++)
-                                {
-                                    JSONObject s = sensor.getJSONObject(i);
-                                    orbManager.configSensor(i,(byte)s.getInt("type"),(byte)s.getInt("mode"),(short)s.getInt("option"));
-                                }
-                            }
-                        }
-                        break;
-
-                    default:
-                        Log.e(TAG, "Not supported msg: " + msg);
-                        break;
-                } //  switch (type)
-            }
-
-        } catch (final JSONException e) {
-            // ignore invalid messages
-            Log.e(TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg);
-        } catch (final NullPointerException e) {
-            Log.e(TAG, "Command parsing error: " + e.getMessage() + " processing: " + msg);
-        }catch (final Exception e) {
-            Log.e(TAG, "Exception: " + e.getMessage() + " processing: " + msg);
-        }
-    }
-
-    //---------------------------------------------------------------
-    public void report()
-    {
-        JSONObject out = new JSONObject();
-        robotToJs(out);
-        final JSONObject answer = out;
-        sendToJS(answer.toString());
-    }
-
-    //---------------------------------------------------------------
-    public void reportDisconnect()
-    {
-        reportStateChanged("connect", "disconnected", "orb");
-    }
-
-
-
-    //---------------------------------------------------------------
-    public void robotToJs( JSONObject out )
+    public void jsToRobot( JSONObject msg )
     {
         try
         {
-            out.put("target", "orb");
-            out.put("type", "data");
+            String target = msg.getString( "target" );
+            String type = msg.getString( "type" );
 
-            JSONObject prop = new JSONObject();
-
-            JSONArray motor = new JSONArray();
-            for (byte i = 0; i < 4; i++)
+            if( !target.equals( ROBOT ) )
             {
-                JSONObject m = new JSONObject();
-                m.put("pwr", orbManager.getMotorPwr(i));
-                m.put("speed", orbManager.getMotorSpeed(i));
-                m.put("pos", orbManager.getMotorPos(i));
-                motor.put(m);
+                Log.e( TAG, "jsToRobot: " + "wrong target" );
+                return; // wrong robot
             }
-            prop.put("Motor", motor);
 
-            JSONArray sensor = new JSONArray();
-            for (byte i = 0; i < 4; i++)
+            switch( type )
             {
-                JSONObject s = new JSONObject();
-                s.put("valid",  orbManager.getSensorValid(i));
-                s.put("type",   orbManager.getSensorType(i));
-                s.put("option", orbManager.getSensorOption(i));
-                s.put("value",  orbManager.getSensorValue(i));
-                sensor.put(s);
+                case "startScan":
+                    handle_startScan( msg );
+                    break;
+                case "stopScan":
+                    handle_stopScan( msg );
+                    break;
+                case "connect":
+                    handle_connect( msg );
+                    break;
+                case "disconnect":
+                    handle_disconnect( msg );
+                    break;
+                case "configToORB":
+                    handle_configToORB( msg );
+                    break;
+                case "propToORB":
+                    handle_propToORB( msg );
+                    break;
+                case "settingsToORB":
+                    handle_settingsToORB( msg );
+                    break;
+                case "downloadToORB":
+                    handle_downloadToORB( msg );
+                    break;
+                case "commandToAS":
+                    handle_commandToAS( msg );
+                    break;
+                case "configToAS":
+                    handle_configToAS( msg );
+                    break;
+                case "layoutToMon":
+                    handle_layoutToMon( msg );
+                    break;
+                case "texteToMon":
+                    handle_texteToMon( msg );
+                    break;
+                default:
+                    Log.e( TAG, "Not supported msg: " + msg );
+                    break;
             }
-            prop.put("Sensor", sensor);
-
-            prop.put("Vcc", orbManager.getVcc());
-
-            JSONArray b = new JSONArray();
-            b.put(orbManager.getSensorDigital((byte)0));
-            b.put(orbManager.getSensorDigital((byte)1));
-
-            prop.put("Digital", b);
-
-            prop.put("Status",orbManager.getStatus());  // TODO: get status
-
-            out.put("propFromORB", prop);
-
-
-        } catch (JSONException e) {
-            Log.e(TAG, "Json parsing error: " + e.getMessage());
-            // nothing to do, msg/answer is save but empty
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+        catch (final NullPointerException e)
+        {
+            Log.e( TAG, "Command parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+        catch (final Exception e)
+        {
+            Log.e( TAG, "Exception: " + e.getMessage() + " processing: " + msg );
         }
     }
 
-    // communication with webview ------------------------------------------------------------------
+    //---------------------------------------------------------------
+    // Handle input from JavaScript (jsToRobot)
+    //---------------------------------------------------------------
+    //---------------------------------------------------------------
+    private void handle_startScan( JSONObject msg )
+    {
+        orbManager.scan();
+    }
+
+    //---------------------------------------------------------------
+    private void handle_stopScan( JSONObject msg )
+    {
+        Log.e( TAG, "stop scan is not implemented for orb robot" );
+    }
+
+    //---------------------------------------------------------------
+    private void handle_connect( JSONObject msg )
+    {
+        try
+        {
+            String robot = msg.getString( "robot" );
+            orbManager.connect( robot );
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_disconnect( JSONObject msg )
+    {
+        Log.d( TAG, "disconnect is not implemented for orb robot" );
+    }
+
+    //---------------------------------------------------------------
+    private void handle_propToORB( JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                JSONObject data = msg.getJSONObject( "data" );
+                JSONArray motor = data.getJSONArray( "Motor" );
+                synchronized (orbManager)
+                {
+                    for( int i = 0; i < motor.length(); i++ )
+                    {
+                        JSONObject m = motor.getJSONObject( i );
+                        orbManager.setMotor( i, m.getInt( "mode" ), m.getInt( "speed" ), m.getInt( "pos" ) );
+                    }
+                }
+                JSONArray servo = data.getJSONArray( "Servo" );
+                synchronized (orbManager)
+                {
+                    for( int i = 0; i < servo.length(); i++ )
+                    {
+                        JSONObject s = servo.getJSONObject( i );
+                        orbManager.setModelServo( i, s.getInt( "mode" ), s.getInt( "pos" ) );
+                    }
+                }
+            }
+            else {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_configToORB( JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                JSONObject data = msg.getJSONObject( "data" );
+                JSONArray motor = data.getJSONArray( "Motor" );
+                synchronized (orbManager)
+                {
+                    for( byte i = 0; i < motor.length(); i++ )
+                    {
+                        JSONObject m = motor.getJSONObject( i );
+                        orbManager.configMotor( i, m.getInt( "tics" ), m.getInt( "acc" ), m.getInt( "Kp" ),
+                                                m.getInt( "Ki" ) );
+                    }
+                }
+                JSONArray sensor = data.getJSONArray( "Sensor" );
+                synchronized (orbManager)
+                {
+                    for( byte i = 0; i < sensor.length(); i++ )
+                    {
+                        JSONObject s = sensor.getJSONObject( i );
+                        orbManager.configSensor( i, (byte) s.getInt( "type" ), (byte) s.getInt( "mode" ),
+                                                 (short) s.getInt( "option" ) );
+                    }
+                }
+            }
+            else {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_settingsToORB( JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                JSONObject data = msg.getJSONObject( "data" );
+
+                synchronized (orbManager)
+                {
+                    if( data.getBoolean( "update" ) )
+                    {
+                        orbManager.sendData( data.getString( "Name" ),
+                                             data.getDouble( "VCC_ok" ),
+                                             data.getDouble( "VCC_low" ));
+                    }
+                    else
+                    {
+                        orbManager.sendRequest();
+                    }
+                }
+            }
+            else {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_downloadToORB( JSONObject msg )
+    {
+        try
+        {
+            if( msg.has( "data" ) )
+            {
+                JSONObject data = msg.getJSONObject( "data" );
+                byte memoryID = -1;
+                switch( data.getString( "id" ) )
+                {
+                    case "Prog":
+                        memoryID = 0;
+                        break;
+                    case "Flash":
+                        memoryID = 1;
+                        break;
+                    case "RAM":
+                        memoryID = 2;
+                        break;
+                }
+                JSONArray payload = data.getJSONArray( "payload" );
+                ByteBuffer buffer = ByteBuffer.allocate( 32 * ((4 * payload.length() + 31) / 32) );
+                int k = 0;
+                for( int i = 0; i < data.length(); i++ )
+                {
+                    buffer.put( k++, (byte) ((payload.getInt( i )) & 0xFF) );
+                    buffer.put( k++, (byte) ((payload.getInt( i ) >> 8) & 0xFF) );
+                    buffer.put( k++, (byte) ((payload.getInt( i ) >> 16) & 0xFF) );
+                    buffer.put( k++, (byte) ((payload.getInt( i ) >> 24) & 0xFF) );
+                }
+                if( !orbManager.download( memoryID, buffer ) )
+                {
+                    // Hier Fehlermeldung: Download laeuft bereits !!!
+                }
+            }
+        }
+        catch( JSONException e )
+        {
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_commandToAS( JSONObject msg )
+    {
+//        try
+//        {
+            if(msg.has("data"))
+            {
+                // aktuell nur ein command, daher kann auf Abfrafe verzichtet werden
+                //JSONObject data = msg.getJSONObject( "data" );
+                //String name = data.getString( "cmd" );
+                androidSensorManager.reset();
+            }
+            else
+            {
+                Log.e( TAG, " processing: " + msg );
+            }
+//        }
+//        catch (final JSONException e)
+//        {
+//            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+//        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_configToAS( JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                JSONObject data = msg.getJSONObject( "data" );
+                String name = data.getString( "name" );
+                int    type = data.getInt( "type" );
+                androidSensorManager.configSensor( type, name );
+            }
+            else
+            {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_layoutToMon(JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                synchronized (orbManager)
+                {
+                    JSONObject data = msg.getJSONObject( "data" );
+                    monitorManager.setLayout( data );
+                }
+            }
+            else {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    private void handle_texteToMon(JSONObject msg )
+    {
+        try
+        {
+            if(msg.has("data"))
+            {
+                synchronized (orbManager)
+                {
+                    JSONObject data = msg.getJSONObject( "data" );
+                    JSONArray texte = data.getJSONArray( "texte" );
+
+                    String str = "";
+                    for( byte z = 0; z < texte.length(); z++ )
+                    {
+                        str += texte.getString( z ) +"\n";
+                    }
+                    monitorManager.setText( str );
+                }
+            }
+            else {
+                Log.e( TAG, " processing: " + msg );
+            }
+        }
+        catch (final JSONException e)
+        {
+            // ignore invalid messages
+            Log.e( TAG, "Json parsing error: " + e.getMessage() + " processing: " + msg );
+        }
+    }
+
+    //---------------------------------------------------------------
+    // Report to JavaScript
+    //---------------------------------------------------------------
+    //---------------------------------------------------------------
+    @Override
+    public void reportDisconnect()
+    {
+        reportStateChanged( "connect", "disconnected", "orb" );
+    }
+
+    //---------------------------------------------------------------
+    @Override
+    public void reportConnect(String brickId, String brickName)
+    {
+        reportStateChanged( "connect","connected",brickId, "brickname", brickName);
+    }
+
+    //---------------------------------------------------------------
+    @Override
+    public void reportScan(String brickId, String brickName)
+    {
+        reportStateChanged( "scan", "appeared", brickId, "brickname", brickName );
+    }
+
+    //---------------------------------------------------------------
+    @Override
+    public void reportORB( )
+    {
+        JSONObject msg = new JSONObject();
+        try
+        {
+            if( orbManager.settingsFromORB.isNew )
+            {
+                msg.put("target", "orb");
+                msg.put("type", "settingsFromORB");
+                JSONObject data = new JSONObject();
+                JSONArray version = new JSONArray();
+                version.put(orbManager.settingsFromORB.getVersion()[0]);
+                version.put(orbManager.settingsFromORB.getVersion()[1]);
+                data.put("Version",version);
+                JSONArray board = new JSONArray();
+                board.put(orbManager.settingsFromORB.getBoard()[0]);
+                board.put(orbManager.settingsFromORB.getBoard()[1]);
+                data.put("Board",board);
+                data.put("Name",orbManager.settingsFromORB.getNamel());
+                data.put("VCC_ok",orbManager.settingsFromORB.getVcc_ok());
+                data.put("VCC_low",orbManager.settingsFromORB.getVcc_low());
+                msg.put( "data", data );
+                orbManager.settingsFromORB.isNew = false;
+            }
+            else
+            {
+                msg.put("target", "orb");
+                msg.put("type", "propFromORB");
+                JSONObject data = new JSONObject();
+
+                JSONArray motor = new JSONArray();
+                for( byte i = 0; i < 4; i++ )
+                {
+                    JSONObject m = new JSONObject();
+                    cPropFromORB.Motor value = orbManager.getMotor( i );
+                    m.put( "pwr", value.pwr );
+                    m.put( "speed", value.speed );
+                    m.put( "pos", value.pos );
+                    motor.put( m );
+                }
+                data.put( "Motor", motor );
+
+                JSONArray sensor = new JSONArray();
+                for( byte i = 0; i < 4; i++ )
+                {
+                    JSONObject s = new JSONObject();
+                    cPropFromORB.Sensor value = orbManager.getSensor( i );
+                    s.put( "valid", value.isValid );
+                    s.put( "type", value.type );
+                    s.put( "option", value.option );
+                    JSONArray v = new JSONArray();
+                    v.put( value.value[0] );
+                    v.put( value.value[1] );
+                    s.put( "value", v );
+                    sensor.put( s );
+                }
+
+                data.put( "Sensor", sensor );
+
+                data.put( "Vcc", orbManager.getVcc() );
+
+                JSONArray digital = new JSONArray();
+                digital.put( orbManager.getSensorDigital( (byte) 0 ) );
+                digital.put( orbManager.getSensorDigital( (byte) 1 ) );
+
+                data.put( "Digital", digital );
+
+                data.put( "Status", orbManager.getStatus() );  // TODO: get status
+
+                msg.put( "data", data );
+            }
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Json parsing error: " + e.getMessage());
+        }
+        sendToJS( msg.toString() );
+    }
+
+    //---------------------------------------------------------------
+    @Override
+    public void reportDownload(String ackn)
+    {
+        JSONObject msg = new JSONObject();
+        try
+        {
+            msg.put("target", "orb");
+            msg.put("type", "downloadFromORB");
+            JSONObject data = new JSONObject();
+            data.put("ackn",ackn);
+            msg.put("data",data);
+        }
+        catch (JSONException e) {
+            Log.e(TAG, "Json parsing error: " + e.getMessage());
+        }
+        sendToJS( msg.toString() );
+    }
+
+    //---------------------------------------------------------------
+    // target:orb,type:sensorFromAS,data:{abc:[0,1],xyz:[7]}
+    //
+    @Override
+    public void reportAndroidSensor()
+    {
+        JSONObject msg = new JSONObject();
+        try
+        {
+            msg.put("target", "orb");
+            msg.put("type", "sensorFromAS");
+
+            JSONObject data = new JSONObject();
+            for( AndroidSensor_Sensor s : androidSensorManager.getList() )
+            {
+                JSONArray val = new JSONArray();
+                SensorEvent event = s.getSensorEvent();
+                for( byte i = 0; event != null  && i < event.values.length; i++ )
+                {
+                    val.put(  event.values[i] );
+                }
+                data.put( s.getName(), val );
+            }
+            msg.put("data",data);
+        }
+        catch (JSONException e) {
+            Log.e(TAG, "Json parsing error: " + e.getMessage());
+        }
+        sendToJS( msg.toString() );
+    }
+
+    //---------------------------------------------------------------
+    @Override
+    public void reportMonitor()
+    {
+        byte key = monitorManager.getKey();
+        JSONObject msg = new JSONObject();
+        try
+        {
+            msg.put("target", "orb");
+            msg.put("type", "keyFromMon");
+            JSONObject data = new JSONObject();
+            data.put("key",key);
+            msg.put("data",data);
+        }
+        catch (JSONException e) {
+            Log.e(TAG, "Json parsing error: " + e.getMessage());
+        }
+        sendToJS( msg.toString() );
+    }
+
+    //---------------------------------------------------------------
+    //
+    //---------------------------------------------------------------
     /**
      * Report to the webview new state information.
      *
      * @param strg, min. type, state and brickid in this order are reqired (3 arguments).
-     *  All next arguments have to appear in pairs, key <-> value
+     *              All next arguments have to appear in pairs, key <-> value
      */
     @Override
     public void reportStateChanged(String type, String state, String brickid, String... strg)
     {
-        try {
-            if (type != null && state != null && brickid != null) {
+        try
+        {
+            if( type != null && state != null && brickid != null )
+            {
                 JSONObject newMsg = new JSONObject();
-                newMsg.put("target", ROBOT);
-                newMsg.put("type", type);
-                newMsg.put("state", state);
-                newMsg.put("brickid", brickid);
-                if (strg != null) {
-                    for (int i = 0; i < strg.length; i += 2) {
-                        newMsg.put(strg[i], strg[i + 1]);
+                newMsg.put( "target", ROBOT );
+                newMsg.put( "type", type );
+                newMsg.put( "state", state );
+                newMsg.put( "brickid", brickid );
+                if( strg != null )
+                {
+                    for( int i = 0; i < strg.length; i += 2 )
+                    {
+                        newMsg.put( strg[i], strg[i + 1] );
                     }
                 }
                 sendToJS( newMsg.toString() );
 
-            } else {
-                throw new IllegalArgumentException("Min. 3 parameters required + additional parameters in pairs!");
             }
-        } catch (JSONException | IllegalArgumentException | IndexOutOfBoundsException e) {
-            Log.e(TAG, e.getMessage() + "caused by: " + type + state + brickid + strg);
-        }
-    }
-
-    //---------------------------------------------------------------
-    private void reportScanError(String msg)
-    {
-        try {
-            final JSONObject newMsg = new JSONObject();
-            newMsg.put("target", ROBOT);
-            newMsg.put("type", "scan");
-            newMsg.put("state", "error");
-            newMsg.put("message", msg);
-            sendToJS( newMsg.toString() );
-        } catch (JSONException | IllegalArgumentException e) {
-            Log.e(TAG, e.getMessage() + "caused by: scan " + msg);
+            else
+            {
+                throw new IllegalArgumentException(
+                        "Min. 3 parameters required + additional parameters in pairs!" );
+            }
+        } catch( JSONException | IllegalArgumentException | IndexOutOfBoundsException e )
+        {
+            Log.e( TAG, e.getMessage() + "caused by: " + type + state + brickid + strg );
         }
     }
 
     //---------------------------------------------------------------
     private void sendToJS( String str )
     {
-        this.mainView.post(new Runnable()
+        this.webView.post( new Runnable()
         {
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void run()
             {
-                mainView.loadUrl("javascript:webviewController.appToJsInterface('" + str + "')");
+                webView.loadUrl( "javascript:webviewController.appToJsInterface('" + str + "')" );
             }
-        });
-        Log.e(TAG, str );
+        } );
+
+      //  Log.e( TAG, str );
     }
 
 }  // end of class

@@ -79,16 +79,19 @@ public class Util {
         prefDialogBuilder.setPositiveButton("OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (defaultValue.equals(userInput.getText().toString())) {
-                            dialog.dismiss();
-                        } else {
+
+//TB: URL auch dann neu laden, wenn Adresse unveraendert
+                       // if (defaultValue.equals(userInput.getText().toString())) {
+                       //     dialog.dismiss();
+                       // } else {
                             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(orLabActivity);
                             SharedPreferences.Editor editor = preferences.edit();
                             editor.putString("prefUrl", userInput.getText().toString());
                             editor.apply();
                             orView.loadUrl(userInput.getText().toString());
                             dialog.dismiss();
-                        }
+                       // }
+//end
                     }
                 });
         prefDialogBuilder.setNegativeButton(R.string.msg_cancel,

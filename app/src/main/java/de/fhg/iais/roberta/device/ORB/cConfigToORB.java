@@ -7,20 +7,20 @@
 */
 
 //*******************************************************************
-package com.ORB_App.ORB;
+package de.fhg.iais.roberta.device.ORB;
 
 //*******************************************************************
 import java.nio.ByteBuffer;
 
 //*******************************************************************
-public class cConfigToORB
+class cConfigToORB
 {
     //---------------------------------------------------------------
     private class Sensor
     {
-        byte type     = 0;
-        byte mode     = 0;
-        short option   = 0;
+        byte type    = 0;
+        byte mode    = 0;
+        short option = 0;
     }
 
     //---------------------------------------------------------------
@@ -54,13 +54,10 @@ public class cConfigToORB
     //---------------------------------------------------------------
     public int fill( ByteBuffer buffer )
     {
-        int idx = 2;
+        int idx = 4;
 
         synchronized( this )
         {
-            buffer.put( idx++, (byte)0 ); // id
-            buffer.put( idx++, (byte)0 ); // reserved
-
             for( int i = 0; i < 4; i++ )
             {
                 buffer.put( idx++, sensor[i].type   );
@@ -86,7 +83,10 @@ public class cConfigToORB
                 buffer.put( idx++, (byte)0 ); // reserved
             }
         } // synchronized
-        return( idx - 2 );
+
+        ORB_Remote.addDataFrame( buffer, (byte)0, idx );
+
+        return( idx );
     }
 
     //---------------------------------------------------------------

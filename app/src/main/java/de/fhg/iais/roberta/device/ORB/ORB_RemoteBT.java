@@ -7,77 +7,77 @@
 */
 
 //*******************************************************************
-package com.ORB_App.ORB;
+package de.fhg.iais.roberta.device.ORB;
 
 //*******************************************************************
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Set;
 import java.util.UUID;
 
 //*******************************************************************
-public class ORB_RemoteBT extends ORB_Remote
+class ORB_RemoteBT extends ORB_Remote
 {
     //---------------------------------------------------------------
     private BluetoothSocket BT_Socket;
-    private OutputStream    BT_OutStream;
-    private InputStream     BT_InStream;
-    private boolean         isConnected = false;
+    private OutputStream BT_OutStream;
+    private InputStream BT_InStream;
+    private boolean isConnected = false;
 
     //---------------------------------------------------------------
     private ByteBuffer bufferIN;
     private ByteBuffer bufferOUT;
 
     //---------------------------------------------------------------
-    private boolean ready     = false;
-    private int     pos       = 0;
-    private byte    temp      = 0;
+    private boolean ready = false;
+    private int pos = 0;
+    private byte temp = 0;
 
-    private static final String TAG   = "ORB_BT";
+    private static final String TAG = "ORB_BT";
 
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID MY_UUID = UUID.fromString( "00001101-0000-1000-8000-00805F9B34FB" );
 
     //---------------------------------------------------------------
-    public ORB_RemoteBT(ORB_RemoteHandler handler)
+    public ORB_RemoteBT( ORB_Manager orb_manager )
     {
-        super(handler);
+        super( orb_manager );
 
-        bufferIN  = ByteBuffer.allocate(256);
-        bufferOUT = ByteBuffer.allocate(256);
+        bufferIN = ByteBuffer.allocate( 256 );
+        bufferOUT = ByteBuffer.allocate( 256 );
 
         isConnected = false;
     }
 
     //---------------------------------------------------------------
-    public void init()
-    {
-    }
-
-    //---------------------------------------------------------------
-    public void open( BluetoothDevice BT_Device )
+    public BluetoothDevice open( String addr )
     {
         close();
 
+        BluetoothDevice BT_Device
+                = BluetoothAdapter.getDefaultAdapter().getRemoteDevice( addr );
+        BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
         try
         {
-            synchronized (this) {
-                BT_Socket = BT_Device.createRfcommSocketToServiceRecord(MY_UUID);
+            synchronized( this )
+            {
+                BT_Socket = BT_Device.createRfcommSocketToServiceRecord( MY_UUID );
                 BT_Socket.connect();
 
                 BT_OutStream = BT_Socket.getOutputStream();
-                BT_InStream  = BT_Socket.getInputStream();
+                BT_InStream = BT_Socket.getInputStream();
                 isConnected = true;
             }
-        }
-        catch(IOException e)
+        } catch( IOException e )
         {
             isConnected = false;
         }
+        return (BT_Device);
     }
 
     //---------------------------------------------------------------
@@ -86,77 +86,87 @@ public class ORB_RemoteBT extends ORB_Remote
         isConnected = false;
         try
         {
-            if( BT_Socket != null ) {
-                if( BT_InStream != null ) {
+            if(  BT_Socket != null )
+            {
+                if( BT_InStream != null )
+                {
                     BT_InStream.close();
                 }
-                if( BT_OutStream != null ) {
+                if( BT_OutStream != null )
+                {
                     BT_OutStream.close();
                 }
 
                 BT_Socket.close();
                 BT_Socket = null;
+
             }
-        }
-        catch( IOException e )
+        } catch(IOException e)
         {
+            Log.e( TAG, "BT close error" + e.toString() );
         }
     }
+    //---------------------------------------------------------------
+    public Set<BluetoothDevice> getPairedDevices()
+    {
+        BluetoothAdapter BT_Adapter;
+        Set<BluetoothDevice> BT_PairedDevices;
+
+        BT_Adapter = BluetoothAdapter.getDefaultAdapter();
+        BT_PairedDevices = BT_Adapter.getBondedDevices();
+        return (BT_PairedDevices);
+    }
+
 
     //---------------------------------------------------------------
     public boolean isConnected()
     {
-        return( isConnected );
+        return (isConnected);
     }
 
     //---------------------------------------------------------------
     private void updateOut()
     {
-        if(!isConnected)
+        if( !isConnected )
         {
             return;
         }
 
         short crc;
-        int   size;
+        int size;
 
-        size = handler.fill( bufferOUT );
-
-        crc = CRC( bufferOUT, 2, size );
-        bufferOUT.put( 0, (byte)((crc     ) & 0xFF) );
-        bufferOUT.put( 1, (byte)((crc >> 8) & 0xFF) );
+        size = orb_manager.fill( bufferOUT );
 
         byte data[] = new byte[1024];
         short len = 0;
         short idx = 0;
 
-        data[len++] = (byte)( 0x20 | ((bufferOUT.get(idx  )>>4) & 0x0F) );
-        data[len++] = (byte)( 0x30 | ((bufferOUT.get(idx++)   ) & 0x0F) );
+        data[len++] = (byte) (0x20 | ((bufferOUT.get( idx ) >> 4) & 0x0F));
+        data[len++] = (byte) (0x30 | ((bufferOUT.get( idx++ )) & 0x0F));
 
-        while( idx < size+1 )
+        while( idx < size - 1 )
         {
-            data[len++] = (byte)( 0x40 | ((bufferOUT.get(idx  )>>4) & 0x0F) );
-            data[len++] = (byte)( 0x50 | ((bufferOUT.get(idx++)   ) & 0x0F) );
+            data[len++] = (byte) (0x40 | ((bufferOUT.get( idx ) >> 4) & 0x0F));
+            data[len++] = (byte) (0x50 | ((bufferOUT.get( idx++ )) & 0x0F));
         }
-        data[len++] = (byte)( 0x80 | ((bufferOUT.get(idx  )>>4) & 0x0F) );
-        data[len++] = (byte)( 0x90 | ((bufferOUT.get(idx++)   ) & 0x0F) );
+        data[len++] = (byte) (0x80 | ((bufferOUT.get( idx ) >> 4) & 0x0F));
+        data[len++] = (byte) (0x90 | ((bufferOUT.get( idx++ )) & 0x0F));
 
         try
         {
             BT_OutStream.write( data, 0, len );
             BT_OutStream.flush();
-        }
-        catch( IOException e )
+        } catch( IOException e )
         {
         }
     }
 
     //---------------------------------------------------------------
-    private boolean  updateIn()
+    private boolean updateIn()
     {
         if( !isConnected )
         {
-            return( false );
+            return (false);
         }
 
         int r;
@@ -166,7 +176,7 @@ public class ORB_RemoteBT extends ORB_Remote
             {
                 if( (r & 0xF0) == 0x20 || pos > 255 )
                 {
-                    pos   = 0;
+                    pos = 0;
                     ready = false;
                 }
 
@@ -177,7 +187,7 @@ public class ORB_RemoteBT extends ORB_Remote
 
                 if( (r & 0x10) == 0x00 )
                 {
-                    temp = (byte)((r << 4) & 0xf0);
+                    temp = (byte) ((r << 4) & 0xf0);
                 }
                 else
                 {
@@ -186,26 +196,26 @@ public class ORB_RemoteBT extends ORB_Remote
                     pos++;
                 }
             }
-        }
-        catch (IOException e)
+        } catch( IOException e )
         {
-            Log.e(TAG, "error read ");
+            Log.e( TAG, "error read " );
         }
 
         if( ready )
         {
-            handler.process( bufferIN );
+            orb_manager.process( bufferIN );
             ready = false;
-            return( true );
+            return (true);
         }
-        return( false );
+        return (false);
     }
 
     //---------------------------------------------------------------
     public boolean update()
     {
         boolean ret = false;
-        synchronized (this) {
+        synchronized( this )
+        {
             if( updateIn() )
             {
                 ret = true;
@@ -213,7 +223,7 @@ public class ORB_RemoteBT extends ORB_Remote
 
             updateOut();
         }
-        return( ret );
+        return (ret);
     }
 
 } // end of class

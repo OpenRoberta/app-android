@@ -10,6 +10,12 @@
             android:title="@string/pref_title_about"/>
 
         <item
+            android:id="@+id/service"
+            android:title="Service" />
+        <item
+            android:id="@+id/monitor"
+            android:title="Monitor" />
+        <item
             android:id="@+id/exit"
             android:title="@string/pref_title_exit"/>
 

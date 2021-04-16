@@ -7,13 +7,13 @@
 */
 
 //*******************************************************************
-package com.ORB_App.ORB;
+package de.fhg.iais.roberta.device.ORB;
 
 //*******************************************************************
 import java.nio.ByteBuffer;
 
 //*******************************************************************
-public class cPropToORB
+class cPropToORB
 {
     private class Motor
     {
@@ -52,12 +52,9 @@ public class cPropToORB
     //---------------------------------------------------------------
     public int fill( ByteBuffer buffer )
     {
-        int idx = 2;
+        int idx = 4;
         synchronized( this )
         {
-            buffer.put( idx++, (byte)1 ); // id
-            buffer.put( idx++, (byte)0 ); // reserved
-
             for( int i = 0; i < 4; i++ )
             {
                 buffer.put( idx++, (byte)((motor[i].mode      )       ) );
@@ -77,7 +74,10 @@ public class cPropToORB
                 buffer.put( idx++, (byte)((servo[i].pos )) );
             }
         } // synchronized
-        return ( idx-2 );
+
+        ORB_Remote.addDataFrame( buffer, (byte)1, idx );
+
+        return( idx );
     }
 
     //---------------------------------------------------------------

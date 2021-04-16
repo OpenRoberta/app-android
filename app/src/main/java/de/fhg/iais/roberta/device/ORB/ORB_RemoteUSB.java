@@ -7,7 +7,7 @@
 */
 
 //*******************************************************************
-package com.ORB_App.ORB;
+package de.fhg.iais.roberta.device.ORB;
 
 //*******************************************************************
 import android.app.Activity;
@@ -24,19 +24,19 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
-
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 
 //*******************************************************************
-public class ORB_RemoteUSB extends ORB_Remote
+class ORB_RemoteUSB extends ORB_Remote
 {
     //---------------------------------------------------------------
     private ByteBuffer bufferIN;
     private ByteBuffer bufferOUT;
 
     //---------------------------------------------------------------
+    private Activity            activity;
     private UsbManager          mUsbManager;
     private UsbDeviceConnection mConnection;
 
@@ -48,17 +48,13 @@ public class ORB_RemoteUSB extends ORB_Remote
     private static final String TAG = "ORB_USB";
 
     //---------------------------------------------------------------
-    public ORB_RemoteUSB( ORB_RemoteHandler handler )
+    public ORB_RemoteUSB( Activity activity, ORB_Manager orb_manager )
     {
-        super(handler);
+        super(orb_manager);
+        this.activity = activity;
+        this.mUsbManager =  (UsbManager) activity.getSystemService(Context.USB_SERVICE);
         bufferIN  = ByteBuffer.allocate( 128 );
         bufferOUT = ByteBuffer.allocate( 128 );
-    }
-
-    //---------------------------------------------------------------
-    public void init( UsbManager _mUsbManager )
-    {
-        this.mUsbManager = _mUsbManager;
     }
 
     //---------------------------------------------------------------
@@ -89,7 +85,7 @@ public class ORB_RemoteUSB extends ORB_Remote
     };
 
     //---------------------------------------------------------------
-    public void open( Activity orLabActivity )
+    public void open( )
     {
         HashMap<String, UsbDevice> map = mUsbManager.getDeviceList();
 
@@ -101,12 +97,12 @@ public class ORB_RemoteUSB extends ORB_Remote
 
             final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
 
-            PendingIntent permissionIntent = PendingIntent.getBroadcast( orLabActivity,
-                    0,
-                    new Intent(ACTION_USB_PERMISSION),
-                    0 );
+            PendingIntent permissionIntent = PendingIntent.getBroadcast( activity,
+                                                                         0,
+                                                                         new Intent(ACTION_USB_PERMISSION),
+                                                                         0 );
             IntentFilter filter = new IntentFilter( ACTION_USB_PERMISSION );
-            orLabActivity.registerReceiver( usbReceiver, filter );
+            activity.registerReceiver( usbReceiver, filter );
 
             mUsbManager.requestPermission( device, permissionIntent );
         }
@@ -201,11 +197,7 @@ public class ORB_RemoteUSB extends ORB_Remote
     //---------------------------------------------------------------
     private void updateOut()
     {
-        int  size = handler.fill(bufferOUT);
-        short crc = CRC(bufferOUT, 2, size);
-
-        bufferOUT.put( 0, (byte)((crc     ) & 0xFF) );
-        bufferOUT.put( 1, (byte)((crc >> 8) & 0xFF) );
+        int  size = orb_manager.fill(bufferOUT);
 
         requestOUT.queue( bufferOUT, 64 );
 
@@ -223,7 +215,7 @@ public class ORB_RemoteUSB extends ORB_Remote
 
             if (mConnection.requestWait() == requestIN) // wait for status event
             {
-                handler.process(bufferIN);
+                orb_manager.process(bufferIN);
                 return (true);
             }
         }
@@ -234,14 +226,14 @@ public class ORB_RemoteUSB extends ORB_Remote
     public boolean update()
     {
         boolean ret = false;
-        synchronized (this) {
-            if( usbConnected && updateIn() )
-            {
-                ret = true;
-            }
-
-            updateOut();
+synchronized (this) {
+        if( usbConnected && updateIn() )
+        {
+            ret = true;
         }
+
+        updateOut();
+}
         return( ret );
     }
 } // end of class

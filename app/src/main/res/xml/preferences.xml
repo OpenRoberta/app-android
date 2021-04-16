@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
-        android:defaultValue="http://192.168.178.28:1999/#loadSystem&amp;&amp;orb"
+        android:defaultValue="https://lab.open-roberta.org/#loadSystem&amp;&amp;wedo"
         android:key="prefUrl"
         android:selectAllOnFocus="true"
         android:singleLine="true"
