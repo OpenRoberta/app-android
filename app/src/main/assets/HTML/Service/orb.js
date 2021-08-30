@@ -35,7 +35,7 @@ function send( txt, res = "json" )
 			window.webkit.messageHandlers.OpenRoberta.postMessage( txt );
 		} else if ( webViewType === "LOCALHOST" ) {
 			req = new XMLHttpRequest();
-			req.open("POST","http://localhost:80/"+res,false);
+			req.open("POST","/"+res,false);
 			req.overrideMimeType("application/json");
 			//req.addEventListener("load", onReply);
 			//req.timeout = 100;
