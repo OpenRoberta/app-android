@@ -1,4 +1,4 @@
-package de.fhg.iais.roberta.device.AndroidSensor;
+package de.fhg.iais.roberta.device.androidsensor;
 
 import android.app.Activity;
 import android.content.Context;

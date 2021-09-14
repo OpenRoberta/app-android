@@ -1,4 +1,4 @@
-package de.fhg.iais.roberta.device.ORB;
+package de.fhg.iais.roberta.device.orb;
 
 public interface ORB_Report
 {

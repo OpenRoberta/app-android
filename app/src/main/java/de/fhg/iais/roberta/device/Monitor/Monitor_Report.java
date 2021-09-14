@@ -1,4 +1,4 @@
-package de.fhg.iais.roberta.device.Monitor;
+package de.fhg.iais.roberta.device.monitor;
 
 public interface Monitor_Report
 {

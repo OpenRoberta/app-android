@@ -41,7 +41,7 @@ import java.net.URLDecoder;
 import de.fhg.iais.roberta.robot.RobotCommunicator;
 import de.fhg.iais.roberta.robot.wedo.WeDoCommunicator;
 import de.fhg.iais.roberta.robot.orb.ORB_Communicator;
-import de.fhg.iais.roberta.device.Monitor.MonitorActivity;
+import de.fhg.iais.roberta.device.monitor.MonitorActivity;
 
 /**
  * <h1>Open Roberta Mobile</h1>

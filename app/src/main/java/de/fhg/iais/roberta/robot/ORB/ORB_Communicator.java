@@ -15,21 +15,23 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.webkit.WebView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.nio.ByteBuffer;
 
+import de.fhg.iais.roberta.device.androidsensor.AndroidSensor_Manager;
+import de.fhg.iais.roberta.device.androidsensor.AndroidSensor_Report;
+import de.fhg.iais.roberta.device.androidsensor.AndroidSensor_Sensor;
+import de.fhg.iais.roberta.device.monitor.Monitor_Manager;
+import de.fhg.iais.roberta.device.monitor.Monitor_Report;
+import de.fhg.iais.roberta.device.orb.ORB_Manager;
+import de.fhg.iais.roberta.device.orb.ORB_Report;
+import de.fhg.iais.roberta.device.orb.cPropFromORB;
 import de.fhg.iais.roberta.main.ORLabActivity;
 import de.fhg.iais.roberta.robot.RobotCommunicator;
-import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Manager;
-import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Report;
-import de.fhg.iais.roberta.device.AndroidSensor.AndroidSensor_Sensor;
-import de.fhg.iais.roberta.device.Monitor.Monitor_Manager;
-import de.fhg.iais.roberta.device.Monitor.Monitor_Report;
-import de.fhg.iais.roberta.device.ORB.ORB_Manager;
-import de.fhg.iais.roberta.device.ORB.ORB_Report;
-import de.fhg.iais.roberta.device.ORB.cPropFromORB;
 
 //*******************************************************************
 public class ORB_Communicator extends    RobotCommunicator

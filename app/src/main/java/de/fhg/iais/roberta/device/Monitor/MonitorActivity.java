@@ -1,4 +1,4 @@
-package de.fhg.iais.roberta.device.Monitor;
+package de.fhg.iais.roberta.device.monitor;
 
 import android.content.Intent;
 import android.os.Handler;

@@ -1,4 +1,4 @@
-package de.fhg.iais.roberta.device.AndroidSensor;
+package de.fhg.iais.roberta.device.androidsensor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
